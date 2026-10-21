@@ -145,6 +145,12 @@ npm run lint
 
 ## Docker Deployment
 
+The bundled nginx configuration serves the static demo independently of any
+external API hostname. `/api/` returns 404 until an operator configures a real
+backend; an unreachable placeholder upstream must not prevent the UI starting.
+The application currently uses mock data by default. This container check does
+not establish connectivity to a deployed API.
+
 ### Build and run with Docker
 
 ```bash
