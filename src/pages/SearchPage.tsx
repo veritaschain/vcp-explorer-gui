@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -25,7 +25,7 @@ const EVENT_TYPES = Object.keys(EVENT_TYPE_CODES) as EventType[];
 const SYMBOLS = ['XAUUSD', 'EURUSD', 'BTCUSDT', 'USDJPY', 'GBPUSD'];
 
 export function SearchPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
 
   // Filter states

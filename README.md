@@ -51,8 +51,8 @@ A production-grade web dashboard for exploring, searching, and verifying Veritas
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm or yarn
+- Node.js 24.22.1 (or a later 24.x patch; `.nvmrc` pins development and CI)
+- npm 11+ (`.npmrc` enforces the required versions)
 
 ### Installation
 
@@ -62,7 +62,9 @@ git clone https://github.com/veritaschain/vcp-explorer-gui.git
 cd vcp-explorer-gui
 
 # Install dependencies
-npm install
+nvm install
+nvm use
+npm ci
 
 # Copy environment configuration
 cp .env.example .env
@@ -142,6 +144,12 @@ npm run lint
 ```
 
 ## Docker Deployment
+
+The bundled nginx configuration serves the static demo independently of any
+external API hostname. `/api/` returns 404 until an operator configures a real
+backend; an unreachable placeholder upstream must not prevent the UI starting.
+The application currently uses mock data by default. This container check does
+not establish connectivity to a deployed API.
 
 ### Build and run with Docker
 

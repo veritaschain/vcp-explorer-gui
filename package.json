@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -26,7 +27,7 @@
   "devDependencies": {
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@types/node": "^22.9.0",
+    "@types/node": "^24",
     "@vitejs/plugin-react": "^4.3.3",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",
@@ -35,7 +36,8 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9.14.0",
     "@typescript-eslint/eslint-plugin": "^8.13.0",
-    "@typescript-eslint/parser": "^8.13.0"
+    "@typescript-eslint/parser": "^8.13.0",
+    "@eslint/js": "^9.14.0"
   },
   "keywords": [
     "veritaschain",
@@ -46,5 +48,9 @@
     "blockchain"
   ],
   "author": "VeritasChain Standards Organization",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24.22.1 <25",
+    "npm": ">=11"
+  }
 }

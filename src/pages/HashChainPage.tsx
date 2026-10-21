@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { vcpClient } from '@/lib/api-client';
 import { verifyHashChain, truncateHash } from '@/lib/crypto';
-import { formatDate, cn, getEventTypeColor, getEventTypeBgColor } from '@/lib/utils';
+import { formatDate, cn } from '@/lib/utils';
 import { EventTypeBadge } from '@/components/features/EventTypeBadge';
 import type { EventType, EventDetailResponse } from '@/types/vcp';
 
@@ -24,7 +24,7 @@ export function HashChainPage() {
   const [activeTraceId, setActiveTraceId] = useState(traceId || searchParams.get('trace_id') || '');
 
   // Fetch events by trace ID
-  const { data: eventsData, isLoading, refetch } = useQuery({
+  const { data: eventsData, isLoading } = useQuery({
     queryKey: ['chain', activeTraceId],
     queryFn: () => vcpClient.searchEvents({ trace_id: activeTraceId, limit: 50 }),
     enabled: !!activeTraceId,
@@ -323,9 +323,8 @@ interface ChainNodeProps {
   prevEvent?: EventDetailResponse;
 }
 
-function ChainNode({ event, index, isFirst, isLast, isBroken, prevEvent }: ChainNodeProps) {
+function ChainNode({ event, index, isFirst, isLast, isBroken }: ChainNodeProps) {
   const isGenesis = event.security.prev_hash === '0000000000000000000000000000000000000000000000000000000000000000';
-  const isValidLink = isGenesis || (prevEvent && event.security.prev_hash === prevEvent.security.event_hash);
 
   return (
     <div className="flex items-stretch">

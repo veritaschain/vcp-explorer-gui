@@ -13,7 +13,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { vcpClient } from '@/lib/api-client';
-import { formatDate, formatNumber, getEventTypeColor, getEventTypeBgColor } from '@/lib/utils';
+import { formatDate, formatNumber } from '@/lib/utils';
 import { EventTypeBadge } from '@/components/features/EventTypeBadge';
 import { StatusBadge } from '@/components/features/StatusBadge';
 import type { EventType } from '@/types/vcp';

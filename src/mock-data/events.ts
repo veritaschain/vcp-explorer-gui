@@ -13,13 +13,6 @@ import type {
   EventType,
 } from '@/types/vcp';
 
-// Generate UUID v7-like strings
-function generateUUIDv7(): string {
-  const timestamp = Date.now().toString(16).padStart(12, '0');
-  const random = Math.random().toString(16).substring(2, 26);
-  return `${timestamp.substring(0, 8)}-${timestamp.substring(8, 12)}-7${random.substring(0, 3)}-${['8', '9', 'a', 'b'][Math.floor(Math.random() * 4)]}${random.substring(3, 6)}-${random.substring(6, 18)}`;
-}
-
 // Generate realistic SHA-256 hash
 function generateHash(): string {
   const chars = '0123456789abcdef';
