@@ -18,13 +18,13 @@ services:
 
   # Development mode with hot reload
   vcp-explorer-dev:
-    image: node:20-alpine
+    image: node:24.22.1-alpine
     working_dir: /app
     volumes:
       - .:/app
       - /app/node_modules
     ports:
       - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
     profiles:
       - dev

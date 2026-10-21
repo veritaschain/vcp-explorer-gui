@@ -51,8 +51,8 @@ A production-grade web dashboard for exploring, searching, and verifying Veritas
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm or yarn
+- Node.js 24.22.1 (or a later 24.x patch; `.nvmrc` pins development and CI)
+- npm 11+ (`.npmrc` enforces the required versions)
 
 ### Installation
 
@@ -62,7 +62,9 @@ git clone https://github.com/veritaschain/vcp-explorer-gui.git
 cd vcp-explorer-gui
 
 # Install dependencies
-npm install
+nvm install
+nvm use
+npm ci
 
 # Copy environment configuration
 cp .env.example .env
