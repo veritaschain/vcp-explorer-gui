@@ -64,4 +64,4 @@ jobs:
         run: |
           docker run -d --name explorer -p 8080:80 vcp-explorer-gui:ci
           trap 'docker logs explorer; docker rm -f explorer' EXIT
-          curl --fail --retry 10 --retry-connrefused --retry-delay 1 http://localhost:8080/
+          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 --max-time 5 --retry-max-time 30 --output /dev/null http://localhost:8080/
