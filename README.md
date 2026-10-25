@@ -4,7 +4,7 @@
 >
 > - This is first-party demo code by VeritasChain Co., Ltd., which operates the VeritasChain Standards Organization (VSO). It was written against VCP v1.0, which is superseded by VCP v1.2 (Released, tag `v1.2.0`).
 > - Mock data is used by default: `src/lib/api-client.ts` sets `useMock` to `... || true`, so `VITE_USE_MOCK=false` does not switch it off. Event hashes, Merkle roots, anchors (including Ethereum transaction details) and certificates shown are demo values; anchors are not checked against any chain. The UI shows "Demo data — not verified" where it used to say "Cryptographically Verified & Blockchain Anchored".
-> - Conformance to any VCP tier, or to VAP, has not been independently established. There are zero external implementations of VAP or any of its profiles, including VCP. Not certified: VSO does not issue certificates; the scheme requires a Conformity Assessment Body (CAB) independent of the scheme owner, and the only registered CAB, VeritasChain Co., Ltd., is not independent (VAP v1.2 ERRATA E-2026-10-21). Event "certificates" here are JSON/print views, not certification or a compliance finding.
+> - Conformance to any VCP tier, or to VAP, has not been independently established. There are zero external implementations of VAP or any of its profiles, including VCP. Not certified: VSO does not issue certifications itself; the scheme requires a Conformity Assessment Body (CAB) independent of the scheme owner, and the only registered CAB, VeritasChain Co., Ltd., is not independent (VAP v1.2 ERRATA E-2026-10-21). Event "certificates" here are JSON/print views, not certification or a compliance finding.
 
 **VeritasChain Protocol Explorer - Web Dashboard for VCP Event Exploration and Verification**
 
