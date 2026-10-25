@@ -1,5 +1,5 @@
 // VCP Explorer API Client v1.1
-// Production-ready API wrapper with mock fallback
+// API wrapper with mock fallback (mock data is used by default)
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import type {

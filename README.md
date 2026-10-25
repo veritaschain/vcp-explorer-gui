@@ -1,13 +1,19 @@
 # VCP Explorer GUI
 
+> **Status correction — 25 October 2026**
+>
+> - This is first-party demo code by VeritasChain Co., Ltd., which operates the VeritasChain Standards Organization (VSO). It was written against VCP v1.0, which is superseded by VCP v1.2 (Released, tag `v1.2.0`).
+> - Mock data is used by default: `src/lib/api-client.ts` sets `useMock` to `... || true`, so `VITE_USE_MOCK=false` does not switch it off. Event hashes, Merkle roots, anchors (including Ethereum transaction details) and certificates shown are demo values; anchors are not checked against any chain. The UI shows "Demo data — not verified" where it used to say "Cryptographically Verified & Blockchain Anchored".
+> - Conformance to any VCP tier, or to VAP, has not been independently established. There are zero external implementations of VAP or any of its profiles, including VCP. Not certified: VSO does not issue certificates; the scheme requires a Conformity Assessment Body (CAB) independent of the scheme owner, and the only registered CAB, VeritasChain Co., Ltd., is not independent (VAP v1.2 ERRATA E-2026-10-21). Event "certificates" here are JSON/print views, not certification or a compliance finding.
+
 **VeritasChain Protocol Explorer - Web Dashboard for VCP Event Exploration and Verification**
 
-![VCP Version](https://img.shields.io/badge/VCP-v1.0-blue)
+![VCP Version](https://img.shields.io/badge/VCP-v1.0_(superseded_by_v1.2)-lightgrey)
 ![License](https://img.shields.io/badge/License-Apache%202.0-green)
 ![React](https://img.shields.io/badge/React-18.3-61dafb)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 
-A production-grade web dashboard for exploring, searching, and verifying VeritasChain Protocol (VCP) events. Built with React, TypeScript, and TailwindCSS.
+A demo dashboard (mock data by default) for exploring, searching, and verifying VeritasChain Protocol (VCP) events. Built with React, TypeScript, and TailwindCSS.
 
 ## Features
 
@@ -23,14 +29,14 @@ A production-grade web dashboard for exploring, searching, and verifying Veritas
 - VCP-GOV: Algorithm governance and AI explainability (SHAP values)
 
 ### 🔐 Cryptographic Verification
-- **Merkle Proof Verification**: RFC 6962 compliant inclusion proofs
+- **Merkle Proof Verification**: inclusion proofs using RFC 6962 hash prefixes (conformance not assessed)
 - Client-side SHA-256 computation using Web Crypto API
 - Visual step-by-step verification process
 
 ### 📜 Certificate Generation
-- Regulatory-compliant event certificates
-- PDF export for audit trails
-- Blockchain anchor verification
+- Event certificate view (JSON/print; not a certification or compliance finding)
+- Print view (browser print)
+- Blockchain anchor display (demo data; not verified on-chain)
 
 ### 🔗 Event Chain Visualization
 - Transaction lifecycle tracking (SIG → ORD → ACK → EXE)
@@ -187,7 +193,7 @@ The GUI is designed to integrate with the VCP Explorer API v1.1.
 
 > **Development Note**: Mock data is included for offline demonstrations. Set `VITE_USE_MOCK=true` in your environment.
 
-See [API_REFERENCE.md](../API_REFERENCE.md) for complete API documentation.
+See [API_REFERENCE.md](https://github.com/veritaschain/vcp-explorer-api/blob/main/API_REFERENCE.md) in vcp-explorer-api for API documentation.
 
 ## VCP Event Types
 
@@ -241,7 +247,7 @@ Apache 2.0 - See [LICENSE](LICENSE) for details.
 
 ## Related Projects
 
-- [VCP Specification v1.0](https://github.com/veritaschain/vcp-spec) - Protocol specification
+- [VCP Specification](https://github.com/veritaschain/vcp-spec) - Protocol specification (current release: v1.2)
 - [VCP Explorer API](https://github.com/veritaschain/vcp-explorer-api) - Backend API server
 - [VCP SDK (TypeScript)](https://github.com/veritaschain/vcp-sdk-typescript) - TypeScript SDK
 - [VCP SDK (Python)](https://github.com/veritaschain/vcp-sdk-python) - Python SDK

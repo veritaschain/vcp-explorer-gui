@@ -83,7 +83,7 @@ export function CertificatePage() {
               <FileText className="w-5 h-5 text-vcp-400" />
               Event Certificate
             </h1>
-            <p className="text-sm text-vcp-400">Regulatory Compliance Export</p>
+            <p className="text-sm text-vcp-400">Demo certificate view (not a compliance finding)</p>
           </div>
         </div>
 
@@ -120,7 +120,7 @@ export function CertificatePage() {
         <div className="flex items-center justify-center gap-3 mb-8 p-4 bg-verify-500/10 border border-verify-500/20 rounded-lg print:bg-green-50 print:border-green-200">
           <CheckCircle2 className="w-6 h-6 text-verify-400 print:text-green-600" />
           <span className="font-semibold text-verify-400 print:text-green-700">
-            Cryptographically Verified & Blockchain Anchored
+            Demo data — not verified
           </span>
         </div>
 
@@ -307,7 +307,7 @@ export function CertificatePage() {
             VeritasChain Standards Organization (VSO) • veritaschain.org
           </p>
           <p className="text-xs text-vcp-400 print:text-gray-400 mt-2">
-            This certificate can be independently verified using the VCP Explorer or any RFC 6962 compliant verifier.
+            Demo data. This view is not a certification or a compliance finding; the anchor details are not checked on-chain.
           </p>
         </div>
       </div>
@@ -318,7 +318,7 @@ export function CertificatePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <UseCaseCard
             title="Regulatory Submission"
-            description="Submit to SEC, FINRA, or ESMA as proof of execution"
+            description="Supporting record for regulator review (not proof of compliance)"
           />
           <UseCaseCard
             title="Dispute Resolution"

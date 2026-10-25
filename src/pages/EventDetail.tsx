@@ -415,7 +415,7 @@ export function EventDetail() {
               <div className="mt-4 p-4 bg-verify-500/10 border border-verify-500/20 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle2 className="w-4 h-4 text-verify-400" />
-                  <span className="text-sm font-medium text-verify-400">Blockchain Anchored</span>
+                  <span className="text-sm font-medium text-verify-400">Anchor record (demo data — not verified)</span>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">

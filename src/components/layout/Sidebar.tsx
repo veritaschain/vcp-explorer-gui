@@ -146,10 +146,10 @@ export function Sidebar() {
         <div className="mx-3 p-3 bg-gradient-to-br from-vcp-600/20 to-verify-600/10 rounded-lg border border-vcp-600/20">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 bg-verify-500 rounded-full" />
-            <span className="text-xs font-semibold text-white">VCP v1.0</span>
+            <span className="text-xs font-semibold text-white">Spec: VCP v1.2 · demo data v1.0</span>
           </div>
           <p className="text-xs text-vcp-400">
-            RFC 6962 Compliant · SHA-256 · Ed25519
+            Demo data — not verified · SHA-256 · Ed25519
           </p>
         </div>
       </nav>
