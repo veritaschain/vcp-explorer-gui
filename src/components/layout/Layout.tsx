@@ -8,7 +8,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-vcp-950 grid-bg">
+    <div className="min-h-screen min-w-0 bg-vcp-950 grid-bg">
       {/* Header */}
       <Header />
       
@@ -18,8 +18,8 @@ export function Layout({ children }: LayoutProps) {
         <Sidebar />
         
         {/* Main content */}
-        <main className="flex-1 ml-64 pt-16">
-          <div className="p-6 max-w-7xl mx-auto">
+        <main className="min-w-0 flex-1 pt-16 lg:ml-64">
+          <div className="mx-auto min-w-0 max-w-7xl px-3 py-4 sm:p-6">
             {children}
           </div>
         </main>
