@@ -111,7 +111,7 @@ export function Dashboard() {
           icon={Database}
           label="Total Events"
           value={systemStatus ? formatNumber(systemStatus.total_events) : '---'}
-          subtext="VCP v1.0 Events"
+          subtext="Demo events (VCP v1.0 format)"
           color="blue"
         />
         <StatCard

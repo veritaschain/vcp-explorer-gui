@@ -112,7 +112,7 @@ export function MerkleProofPage() {
               <Shield className="w-5 h-5 text-verify-400" />
               Merkle Proof Verification
             </h1>
-            <p className="text-sm text-vcp-400">RFC 6962 Compliant Inclusion Proof</p>
+            <p className="text-sm text-vcp-400">Inclusion proof (RFC 6962 hash prefixes) — demo data</p>
           </div>
         </div>
 
