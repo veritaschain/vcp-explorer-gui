@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const root = path.resolve('dist');
+const root = path.resolve(process.env.DIST_ROOT || 'dist');
 const out = path.resolve('a11y-report');
 fs.mkdirSync(out, { recursive: true });
 const errors = [];
