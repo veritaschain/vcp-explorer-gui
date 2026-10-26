@@ -234,11 +234,17 @@ export function CertificatePage() {
             Merkle Inclusion Proof (RFC 6962)
           </h3>
           <div className="bg-vcp-900/50 print:bg-gray-100 rounded-lg p-4">
-            <div className="flex items-center gap-4 mb-3">
+            <div className="flex flex-wrap items-center gap-4 mb-3">
               <div>
                 <span className="text-xs text-vcp-500 print:text-gray-500">Leaf Index</span>
                 <p className="font-mono text-white print:text-black">
                   #{certificate.merkle_proof.leaf_index}
+                </p>
+              </div>
+              <div>
+                <span className="text-xs text-vcp-500 print:text-gray-500">Supplied Tree Size</span>
+                <p className="font-mono text-white print:text-black">
+                  {certificate.merkle_proof.tree_size ?? 'Not supplied'}
                 </p>
               </div>
               <div>

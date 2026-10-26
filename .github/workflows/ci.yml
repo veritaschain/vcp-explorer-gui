@@ -42,7 +42,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test cryptographic byte handling
+      - name: Test cryptographic byte handling and Merkle inclusion
         run: npm test
 
       - name: Upload build artifacts

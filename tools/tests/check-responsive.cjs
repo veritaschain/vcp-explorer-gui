@@ -1,5 +1,5 @@
 'use strict';
-// Bounded first-party browser regression for the mock Explorer certificate.
+// Bounded first-party browser regression for the mock Explorer certificate and proof.
 // These checks do not establish cryptographic or accessibility conformance.
 const playwright = require(process.env.PW_MODULE);
 const browserEngine = process.env.BROWSER_ENGINE || 'chromium';
@@ -153,6 +153,19 @@ let context;
     const pdfOk = pdf.length > 5_000 && pdf.subarray(0, 5).toString('ascii') === '%PDF-';
     results.push({ kind: 'chromium-pdf-generated', ok: pdfOk, pdfBytes: pdf.length });
   }
+  // Exercise the actual page -> mock response -> verifier call. A dropped
+  // tree_size argument must not silently turn this into a successful check.
+  await page.emulateMedia({ media: 'screen' });
+  await page.goto(origin + eventPath + '/proof');
+  await page.getByRole('button', { name: 'Verify Inclusion', exact: true }).click();
+  await page.getByRole('heading', { name: 'Inclusion proof matches supplied root', exact: true }).waitFor();
+  const proofBoundary = await page.getByText(
+    'The supplied hash and path match this root and tree size. Event contents, signatures and external anchors have not been verified.',
+    { exact: true }
+  ).isVisible();
+  const suppliedSize = await page.getByText('Supplied Tree Size', { exact: true }).locator('..').locator('p').innerText();
+  results.push({ kind: 'demo-inclusion-caller', ok: proofBoundary && /^[1-9][0-9]*$/.test(suppliedSize), suppliedSize });
+  await page.screenshot({ path: path.join(output, 'demo-inclusion.png'), fullPage: true });
   results.push({ kind: 'browser-page-errors', ok: pageErrors.length === 0, errors: pageErrors });
   const allPassed = results.every(x => x.ok);
   fs.writeFileSync(path.join(output, 'result.json'), JSON.stringify({

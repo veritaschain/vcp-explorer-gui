@@ -42,7 +42,8 @@ export function MerkleProofPage() {
         proof.event_hash,
         proof.merkle_proof.leaf_index,
         proof.merkle_proof.audit_path,
-        proof.merkle_proof.root_hash
+        proof.merkle_proof.root_hash,
+        proof.merkle_proof.tree_size
       );
       setVerificationResult(result);
     } catch (err) {
@@ -112,7 +113,7 @@ export function MerkleProofPage() {
               <Shield className="w-5 h-5 text-verify-400" />
               Merkle Proof Verification
             </h1>
-            <p className="text-sm text-vcp-400">Inclusion proof (RFC 6962 hash prefixes) — demo data</p>
+            <p className="text-sm text-vcp-400">Demo inclusion check — supplied root and tree size are not authenticated</p>
           </div>
         </div>
 
@@ -169,12 +170,12 @@ export function MerkleProofPage() {
               )}
             >
               {verificationResult.isValid
-                ? 'Verification Successful'
-                : 'Verification Failed'}
+                ? 'Inclusion proof matches supplied root'
+                : 'Proof not verified'}
             </h3>
             <p className="text-sm text-vcp-400">
               {verificationResult.isValid
-                ? 'The event is cryptographically proven to be included in the Merkle tree.'
+                ? 'The supplied hash and path match this root and tree size. Event contents, signatures and external anchors have not been verified.'
                 : verificationResult.error || 'The computed root does not match the expected root.'}
             </p>
           </div>
@@ -239,6 +240,11 @@ export function MerkleProofPage() {
             <div>
               <span className="text-xs text-vcp-500 uppercase tracking-wider">Leaf Index</span>
               <p className="text-white font-mono mt-1">{proof.merkle_proof.leaf_index}</p>
+            </div>
+
+            <div>
+              <span className="text-xs text-vcp-500 uppercase tracking-wider">Supplied Tree Size</span>
+              <p className="text-white font-mono mt-1">{proof.merkle_proof.tree_size ?? 'Not supplied — cannot verify inclusion'}</p>
             </div>
 
             {/* Audit Path */}
@@ -367,7 +373,7 @@ export function MerkleProofPage() {
             </div>
             <h3 className="font-medium text-white mb-2">Walk Up the Tree</h3>
             <p className="text-sm text-vcp-400">
-              For each sibling in the audit path, combine hashes: <code className="text-xs">SHA256(0x01 || left || right)</code>
+              Use the leaf index and supplied tree size to order each sibling: <code className="text-xs">SHA256(0x01 || left || right)</code>
             </p>
           </div>
           <div>
@@ -376,7 +382,7 @@ export function MerkleProofPage() {
             </div>
             <h3 className="font-medium text-white mb-2">Compare Root</h3>
             <p className="text-sm text-vcp-400">
-              If the computed root matches the expected root, the event is proven to be in the tree.
+              A matching root confirms this inclusion calculation only. The root and tree size still require independent authentication.
             </p>
           </div>
         </div>

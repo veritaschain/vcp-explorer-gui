@@ -12,6 +12,7 @@ import type {
   EventListItem,
   EventType,
 } from '@/types/vcp';
+import { DEMO_MERKLE_FIXTURE } from './merkle-fixture.ts';
 
 // Generate realistic SHA-256 hash
 function generateHash(): string {
@@ -167,13 +168,17 @@ const MOCK_EVENTS: EventListItem[] = [
   },
 ];
 
-// Hash chain for mock events
-const MOCK_HASHES = MOCK_EVENTS.map(() => generateHash());
-MOCK_HASHES.unshift('0000000000000000000000000000000000000000000000000000000000000000');
+// Deterministic synthetic hashes and genuine inclusion paths for this demo
+// set. These hashes are not hashes of the displayed event payloads, signed
+// records, or externally anchored evidence.
+const MOCK_HASHES = ['0'.repeat(64), ...DEMO_MERKLE_FIXTURE.event_hashes];
 
 // Get mock events with filtering
 export function getMockEvents(params: EventSearchParams = {}): EventSearchResponse {
-  let filtered = [...MOCK_EVENTS];
+  let filtered = MOCK_EVENTS.map((event, index) => ({
+    ...event,
+    hash_prefix: MOCK_HASHES[index + 1].slice(0, 6),
+  }));
 
   if (params.symbol) {
     filtered = filtered.filter((e) => e.symbol === params.symbol);
@@ -312,7 +317,7 @@ export function getMockEventDetail(eventId: string): EventDetailResponse {
       prev_hash: prevHash,
       signature: 'MEUCIQDXyz123abc456def789ghi012jkl345mno678pqr901stu234vwx567yza890==',
       sign_algo: 'ED25519',
-      merkle_root: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
+      merkle_root: DEMO_MERKLE_FIXTURE.root_hash,
       anchor:
         event.status === 'ANCHORED'
           ? {
@@ -329,26 +334,22 @@ export function getMockEventDetail(eventId: string): EventDetailResponse {
 // Get mock Merkle proof
 export function getMockProof(eventId: string): MerkleProofResponse {
   const index = MOCK_EVENTS.findIndex((e) => e.event_id === eventId);
-  const eventHash = MOCK_HASHES[index + 1] || generateHash();
+  if (index < 0) throw new Error('Demo proof is not available for this event');
+  const auditPath = [...DEMO_MERKLE_FIXTURE.audit_paths[index]];
 
   return {
     event_id: eventId,
-    event_hash: eventHash,
+    event_hash: MOCK_HASHES[index + 1],
     merkle_proof: {
-      root_hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
-      leaf_index: index >= 0 ? index : 42,
-      audit_path: [
-        '7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b',
-        '9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d',
-        '1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f',
-      ],
+      root_hash: DEMO_MERKLE_FIXTURE.root_hash,
+      leaf_index: index,
+      tree_size: DEMO_MERKLE_FIXTURE.tree_size,
+      audit_path: auditPath,
     },
     verification_steps: [
       'Compute leaf hash: SHA256(0x00 || event_hash)',
-      'Combine with sibling[0] at level 0',
-      'Combine with sibling[1] at level 1',
-      'Combine with sibling[2] at level 2',
-      'Compare computed root with Merkle root',
+      ...auditPath.map((_, i) => `Combine sibling[${i}] using leaf index and tree size`),
+      'Compare computed root with supplied demo root (not authenticated)',
     ],
   };
 }
