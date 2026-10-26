@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const assert = require('node:assert/strict');
-const root = path.resolve('dist');
+const root = path.resolve(process.env.DIST_ROOT || 'dist');
 const out = path.resolve('pdf-tag-study');
 fs.mkdirSync(out, { recursive: true });
 
