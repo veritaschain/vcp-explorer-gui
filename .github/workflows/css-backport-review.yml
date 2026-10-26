@@ -1,0 +1,35 @@
+name: CSS parser backport diagnosis (temporary)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: f4626a4610620fe00b54517c133a1b6469550057
+          path: harness
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 832e511b5b87d2137ae16de2d1040d7bef1b525c
+          path: subject
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.22.1'
+      - name: Compare installed backport with previous and fixed reference versions
+        run: node harness/tools/diagnostics/css-backport-review.cjs "$GITHUB_WORKSPACE/subject" "$RUNNER_TEMP/css-backport-report"
+      - name: Preserve original results even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: css-backport-report
+          path: ${{ runner.temp }}/css-backport-report/
+          if-no-files-found: error
+          retention-days: 14
