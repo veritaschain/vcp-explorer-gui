@@ -1,0 +1,42 @@
+name: Static Explorer subpath smoke
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  static-subpath:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.22.1'
+      - name: Build with opt-in hash router and explicit static base
+        run: |
+          npm ci --no-audit
+          VITE_ROUTER_MODE=hash npm run build -- --base=/explorer/app/
+          npm test
+      - name: Install test-only Chromium
+        run: |
+          npm install --prefix .browser-tools --ignore-scripts --no-audit --save-exact playwright@1.56.1
+          node .browser-tools/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Exercise static SPA without any server fallback
+        env:
+          PW_MODULE: ${{ github.workspace }}/.browser-tools/node_modules/playwright
+        run: |
+          timeout 180 node tools/tests/check-static-subpath.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: static-subpath-evidence
+          path: subpath-evidence/
+          if-no-files-found: warn
+          retention-days: 14
