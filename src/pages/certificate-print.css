@@ -13,6 +13,16 @@
   .certificate-print-surface .text-vcp-500 {
     color: #7cc5fb;
   }
+
+  /* Keep the event-type label readable over its tinted badge background.
+     The text still identifies the type; meaning is not carried by color alone. */
+  .certificate-print-surface [data-certificate-field="Event Type"] dd span {
+    color: #f0f7ff;
+  }
+
+  .certificate-print-surface .text-purple-400 {
+    color: #d8b4fe;
+  }
 }
 
 /* Keep compact certificate sections together when they fit on a page.
