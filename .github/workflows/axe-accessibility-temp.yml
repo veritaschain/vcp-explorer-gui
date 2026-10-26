@@ -12,12 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
           ref: 6e4c5b75aa1b3b94b3da70d56c41c534116ac547
+          path: subject
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '24.22.1'
       - name: Build fixed first-party GUI
+        working-directory: subject
         run: |
           test "$(git rev-parse HEAD)" = "6e4c5b75aa1b3b94b3da70d56c41c534116ac547"
           npm ci --no-audit
@@ -31,6 +36,7 @@ jobs:
         env:
           PW_MODULE: ${{ github.workspace }}/.a11y-tools/node_modules/playwright
           AXE_SCRIPT: ${{ github.workspace }}/.a11y-tools/node_modules/axe-core/axe.min.js
+          DIST_ROOT: ${{ github.workspace }}/subject/dist
         run: |
           timeout 180 node tools/diagnostics/axe-certificate-review.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
