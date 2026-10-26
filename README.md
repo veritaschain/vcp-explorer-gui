@@ -35,7 +35,7 @@ A demo dashboard (mock data by default) for exploring, searching, and verifying 
 
 ### 📜 Certificate Generation
 - Event certificate view (JSON/print; not a certification or compliance finding)
-- Print view (browser print)
+- Print view (browser-managed Print / Save as PDF); the resulting PDF has **not** been validated as tagged, screen-reader accessible or PDF/UA conformant. See [PDF print accessibility status](docs/PDF_PRINT_ACCESSIBILITY.md).
 - Blockchain anchor display (demo data; not verified on-chain)
 
 ### 🔗 Event Chain Visualization
@@ -49,9 +49,9 @@ A demo dashboard (mock data by default) for exploring, searching, and verifying 
 - **Language**: TypeScript 5.6
 - **Styling**: TailwindCSS 3.4
 - **State Management**: TanStack Query (React Query)
-- **Routing**: React Router 6
+- **Routing**: React Router 7 (static-site publication uses the opt-in hash-router profile)
 - **Icons**: Lucide React
-- **Build Tool**: Vite 5
+- **Build Tool**: Vite 6
 
 ## Getting Started
 
