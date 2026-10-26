@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Shield, Bell, Settings, ExternalLink, Menu, X } from 'lucide-react';
+import { Search, Shield, ExternalLink, Menu, X } from 'lucide-react';
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,6 +51,7 @@ export function Header() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-vcp-400" />
             <input
               type="text"
+              aria-label="Search events"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by Event ID, Trace ID, Symbol, or Hash..."
@@ -59,10 +60,7 @@ export function Header() {
                        focus:outline-none focus:ring-2 focus:ring-vcp-500/50 focus:border-vcp-500
                        transition-all duration-200"
             />
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-block
-                          px-1.5 py-0.5 text-xs font-mono text-vcp-500 bg-vcp-800 rounded">
-              ⌘K
-            </kbd>
+            {/* No shortcut hint until a keyboard shortcut actually exists. */}
           </div>
         </form>
 
@@ -85,15 +83,7 @@ export function Header() {
             <ExternalLink className="w-3 h-3" />
           </a>
 
-          {/* Notifications */}
-          <button className="hidden rounded-lg p-2 text-vcp-400 transition-all hover:bg-vcp-800/50 hover:text-white xl:block">
-            <Bell className="w-5 h-5" />
-          </button>
-
-          {/* Settings */}
-          <button className="hidden rounded-lg p-2 text-vcp-400 transition-all hover:bg-vcp-800/50 hover:text-white xl:block">
-            <Settings className="w-5 h-5" />
-          </button>
+          {/* Inert notifications/settings controls intentionally omitted. */}
         </div>
       </div>
       <nav
