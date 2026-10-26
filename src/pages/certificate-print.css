@@ -1,3 +1,19 @@
+/* Screen text must have a stable contrast background. The former translucent
+   glass inherited the page grid gradient, making automated contrast checks
+   inconclusive and leaving muted labels at about 3.7:1 on the rendered card.
+   Keep the surrounding grid and the existing white print presentation. */
+@media screen {
+  .certificate-print-surface {
+    background-color: #133252;
+    backdrop-filter: none;
+  }
+
+  /* Muted certificate labels and section headings, not the global brand token. */
+  .certificate-print-surface .text-vcp-500 {
+    color: #7cc5fb;
+  }
+}
+
 /* Keep compact certificate sections together when they fit on a page.
    Oversized sections may still fragment; this is not a general pagination
    guarantee, and it never hides or clips overflow to manufacture a pass. */
