@@ -1,0 +1,55 @@
+name: Materialize reviewed Router update (temporary)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  materialize:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'audit/router7-navigation-20261026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Create separate branch from digest-pinned reviewed package files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PYCODE'
+          import base64,hashlib,io,json,os,urllib.request,urllib.error,zipfile
+          repo='veritaschain/vcp-explorer-gui';base='61833aeb0d2a4fbf15afcbca87528f6de3746ee6';branch='fix/router-7-18-4-20261026'
+          root='https://api.github.com/repos/'+repo
+          token=os.environ['GH_TOKEN']
+          headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
+          def api(endpoint,data=None):
+              req=urllib.request.Request(root+endpoint,data=None if data is None else json.dumps(data).encode(),headers=headers,method='GET' if data is None else 'POST')
+              with urllib.request.urlopen(req,timeout=45) as resp:return json.load(resp)
+          assert api('/git/ref/heads/main')['object']['sha']==base,'main moved; stop and review'
+          meta=api('/actions/artifacts/12631954181');assert not meta['expired'];assert meta['workflow_run']['head_sha']=='ebbd76e0e6f9fd31ba1dcae188dc51e3d62b95cb'
+          assert meta['digest']=='sha256:822d0902e546069df9ce6aff45e4f7cb2adc7ae1a25249a003c7208b3ed5e03c'
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*args,**kwargs): return None
+          try:
+              urllib.request.build_opener(NoRedirect).open(urllib.request.Request(root+'/actions/artifacts/12631954181/zip',headers=headers),timeout=45)
+              raise RuntimeError('expected artifact redirect')
+          except urllib.error.HTTPError as e:
+              assert e.code==302; location=e.headers['Location']; assert location.startswith('https://')
+          # Signed artifact URL fetched WITHOUT a GitHub authorization header.
+          with urllib.request.urlopen(location,timeout=90) as resp:raw=resp.read(4000000)
+          assert len(raw)==1641292;assert hashlib.sha256(raw).hexdigest()=='822d0902e546069df9ce6aff45e4f7cb2adc7ae1a25249a003c7208b3ed5e03c'
+          z=zipfile.ZipFile(io.BytesIO(raw));assert len(z.namelist())==len(set(z.namelist()));assert sum(x.file_size for x in z.infolist())<32000000;assert z.testzip() is None
+          files=[('package.json','8675f26718c40b6c7bd0e11742137659fb886d83728ead81b4364fd0e5ad3af0','7167aca679a48178388c6fa5a396a6a234f6f4e0'),('package-lock.json','da96d7a985753b4604809c7079b0462f7f97916566c2ef214a000c2c819778a6','78cada1fec2eee6856b40229ee2285031a25a7ae')]
+          entries=[]
+          for name,sha,blob in files:
+              data=z.read('candidate-'+name);assert hashlib.sha256(data).hexdigest()==sha;assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==blob
+              result=api('/git/blobs',{'content':base64.b64encode(data).decode(),'encoding':'base64'});assert result['sha']==blob
+              entries.append({'path':name,'mode':'100644','type':'blob','sha':blob})
+          base_tree=api('/git/commits/'+base)['tree']['sha']
+          tree=api('/git/trees',{'base_tree':base_tree,'tree':entries})['sha']
+          commit=api('/git/commits',{'message':'fix(deps): update React Router to reviewed 7.18.4','tree':tree,'parents':[base]})['sha']
+          assert api('/git/ref/heads/main')['object']['sha']==base,'main moved; stop before branch creation'
+          api('/git/refs',{'ref':'refs/heads/'+branch,'sha':commit})
+          print(json.dumps({'branch':branch,'commit':commit,'tree':tree,'files':files},indent=2))
+          PYCODE
