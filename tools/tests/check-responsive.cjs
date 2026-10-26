@@ -1,7 +1,11 @@
 'use strict';
 // Bounded Chromium regression for the mock Explorer certificate.
 // Visual checks do not establish cryptographic verification, accessibility conformance or a real deployment.
-const { chromium } = require(process.env.PW_MODULE);
+const playwright = require(process.env.PW_MODULE);
+const browserEngine = process.env.BROWSER_ENGINE || 'chromium';
+if (!['chromium', 'firefox', 'webkit'].includes(browserEngine)) {
+  throw new Error('Unsupported browser engine: ' + browserEngine);
+}
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -35,7 +39,7 @@ let context;
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const origin = 'http://127.0.0.1:' + server.address().port;
-  browser = await chromium.launch({ headless: true });
+  browser = await playwright[browserEngine].launch({ headless: true });
   context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await context.route('**/*', route =>
     new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
@@ -109,13 +113,25 @@ let context;
     && print.siteHeader === 'none' && print.sidebar === 'none';
   results.push({ kind: 'print-media', ok: printOk, details: print, printButtonInvoked: printed });
   await page.screenshot({ path: path.join(output, 'certificate-print.png'), fullPage: true });
+  // Chromium can generate an actual PDF; Firefox/WebKit print-media checks do not
+  // claim PDF output. Save the binary for independent pagination/text inspection.
+  if (browserEngine === 'chromium') {
+    const pdf = await page.pdf({
+      path: path.join(output, 'certificate-print.pdf'),
+      preferCSSPageSize: true,
+      printBackground: true,
+      displayHeaderFooter: false,
+    });
+    const pdfOk = pdf.length > 5_000 && pdf.subarray(0, 5).toString('ascii') === '%PDF-';
+    results.push({ kind: 'chromium-pdf-generated', ok: pdfOk, pdfBytes: pdf.length });
+  }
   results.push({ kind: 'browser-page-errors', ok: pageErrors.length === 0, errors: pageErrors });
   const allPassed = results.every(x => x.ok);
   fs.writeFileSync(path.join(output, 'result.json'), JSON.stringify({
     status: allPassed ? 'passed' : 'failed',
-    browser: browser.version(),
+    browserEngine, browser: browser.version(),
     target: certPath, checks: results,
-    limits: 'Built synthetic mock UI, Chromium only; print media emulation, not PDF pagination; not a live site or full accessibility review.',
+    limits: 'Built synthetic mock UI; Chromium/Firefox/WebKit viewports; actual PDF generated only in Chromium; PDF page layout requires separate inspection; no live site or accessibility conformance.',
   }, null, 2) + '\n');
   if (!allPassed) throw new Error('Responsive/print checks failed: ' + JSON.stringify(results.filter(x => !x.ok)));
 })().catch(error => {
