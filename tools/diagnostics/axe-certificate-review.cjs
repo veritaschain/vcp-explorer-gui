@@ -84,7 +84,7 @@ let browser, context;
   fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(summary,null,2)+'\n');
   console.log(JSON.stringify({
     status:summary.status,uniqueRules:summary.uniqueRules,
-    scans:results.map(x=>({label:x.label,violations:x.violations.map(v=>({rule:v.rule,count:v.nodes.length,impact:v.impact})),incomplete:x.incomplete.map(v=>v.rule),passes:x.passes})),
+    scans:results.map(x=>({label:x.label,violations:x.violations.map(v=>({rule:v.rule,count:v.nodes.length,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,html:n.html,summary:n.summary}))})),incomplete:x.incomplete.map(v=>v.rule),passes:x.passes})),
     browserErrors:errors,
   },null,2));
   if(errors.length) process.exitCode=1;
