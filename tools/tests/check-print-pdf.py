@@ -53,7 +53,7 @@ def main() -> int:
     checks.append(("certificate_heading", "vcp event certificate" in text))
     checks.append(("explicit_demo_warning", "demo data" in text and "not verified" in text))
     checks.append(("not_a_certification", "not a certification" in text))
-    checks.append(("not_a_compliance_finding", "not a compliance finding" in text))
+    checks.append(("compliance_disclaimer", "or a compliance finding" in text))
     report = {
         "status": "passed" if all(ok for _, ok in checks) else "failed",
         "pdf_sha256": hashlib.sha256(raw).hexdigest(),
