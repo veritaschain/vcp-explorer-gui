@@ -38,6 +38,12 @@ jobs:
           BROWSER_ENGINE: ${{ matrix.browser }}
         run: |
           timeout 180 node tools/tests/check-responsive.cjs
+      - name: Inspect actual A4 PDF pages and render previews
+        if: matrix.browser == 'chromium'
+        run: |
+          python3 -m venv .pdf-tools
+          .pdf-tools/bin/pip install --disable-pip-version-check --no-input pymupdf==1.26.1
+          .pdf-tools/bin/python tools/tests/check-print-pdf.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
