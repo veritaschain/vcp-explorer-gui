@@ -1,0 +1,211 @@
+name: GUI Router comparison (temporary)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  compare:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [baseline, router7]
+    env:
+      VARIANT: ${{ matrix.variant }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 61833aeb0d2a4fbf15afcbca87528f6de3746ee6
+          path: subject
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.22.1
+      - name: Audit and build baseline or Router-only candidate
+        run: |
+          python - <<'PYCODE'
+          import hashlib,json,os,pathlib,subprocess,sys
+          r=pathlib.Path('subject').resolve(); out=pathlib.Path('report').resolve(); out.mkdir(exist_ok=True)
+          variant=os.environ['VARIANT']; commands=[]
+          def run(name,args,allowed=(0,),cwd=r):
+              p=subprocess.run(args,cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=240)
+              (out/(name+'.stdout')).write_bytes(p.stdout); (out/(name+'.stderr')).write_bytes(p.stderr)
+              (out/(name+'.exit')).write_text(str(p.returncode)+'\n')
+              commands.append({'name':name,'argv':args,'exit':p.returncode})
+              (out/'commands.json').write_text(json.dumps(commands,indent=2))
+              if p.returncode not in allowed: raise RuntimeError(name+' exit '+str(p.returncode))
+              return p.stdout
+          def audit(name,dev=False):
+              b=run(name,['npm','audit','--json','--package-lock-only']+(['--omit=dev'] if dev else []), (0,1))
+              data=json.loads(b); assert 'error' not in data and isinstance(data.get('vulnerabilities'),dict),data
+              return data
+          def hashes():
+              paths=subprocess.check_output(['git','ls-files','-z'],cwd=r).decode().split('\0')
+              return {p:hashlib.sha256((r/p).read_bytes()).hexdigest() for p in paths if p}
+          assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=r).decode().strip()=='61833aeb0d2a4fbf15afcbca87528f6de3746ee6'
+          for f,sha in [('package.json','78dbfe28dd70c8a4ab399849177493f7b927d3dfc5734ec6405fea13aede3c44'),('package-lock.json','131854ee70a0284036a635f154cceab7b512ef75e796cd0578542c2b8e936af7')]:
+              b=(r/f).read_bytes(); assert hashlib.sha256(b).hexdigest()==sha; (out/('baseline-'+f)).write_bytes(b)
+          before=hashes(); (out/'tracked-before.json').write_text(json.dumps(before,indent=2))
+          subprocess.run(['git','archive','--format=tar.gz','--output='+str(out/'source-baseline.tar.gz'),'HEAD'],cwd=r,check=True)
+          (out/'environment.json').write_text(json.dumps({'variant':variant,'source':'61833aeb0d2a4fbf15afcbca87528f6de3746ee6','node':run('node',['node','--version']).decode().strip(),'npm':run('npm',['npm','--version']).decode().strip()},indent=2))
+          run('registry-metadata',['npm','view','react-router-dom@7.18.4','--json'])
+          audit('baseline-all'); audit('baseline-production',True)
+          if variant=='router7': run('resolve',['npm','install','--package-lock-only','--ignore-scripts','--no-audit','--save-exact','react-router-dom@7.18.4'])
+          for f in ['package.json','package-lock.json']: (out/('candidate-'+f)).write_bytes((r/f).read_bytes())
+          audit('candidate-all'); prod=audit('candidate-production',True)
+          if variant=='router7': assert not prod['vulnerabilities'],prod
+          run('install',['npm','ci','--ignore-scripts','--no-audit'])
+          run('dependency-tree',['npm','ls','--all','--json'])
+          run('lint',['npm','run','lint']); run('build',['npm','run','build']); run('tests',['npm','test'])
+          after=hashes(); (out/'tracked-after.json').write_text(json.dumps(after,indent=2))
+          changed={p for p in before.keys()|after.keys() if before.get(p)!=after.get(p)}
+          assert changed <= {'package.json','package-lock.json'},changed
+          (out/'source-guard.json').write_text(json.dumps({'changed':sorted(changed),'source_unchanged':True},indent=2))
+          run('diff',['git','diff','--','package.json','package-lock.json'])
+          run('playwright-metadata',['npm','view','playwright@1.56.1','--json'])
+          run('playwright-install',['npm','install','--prefix',str(out.parent/'browser-tools'),'--ignore-scripts','--no-audit','--package-lock=true','--save-exact','playwright@1.56.1'],cwd=out.parent)
+          run('chromium-install',['node',str(out.parent/'browser-tools/node_modules/playwright/cli.js'),'install','--with-deps','chromium'],cwd=out.parent)
+          for f in ['package.json','package-lock.json']:
+              (out/('browser-tools-'+f)).write_bytes((out.parent/'browser-tools'/f).read_bytes())
+          PYCODE
+      - name: Browser navigation and print comparison on built mock UI
+        env:
+          PW_MODULE: ${{ github.workspace }}/browser-tools/node_modules/playwright
+        run: |
+          cat > browser.cjs <<'JSCODE'
+          const { chromium } = require(process.env.PW_MODULE);
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const http = require('node:http');
+          const root = path.resolve('subject/dist');
+          const out = path.resolve('report');
+          const checks = [], errors = [], blocked = [];
+          let browser, context;
+          const server = http.createServer((req, res) => {
+            let rel;
+            try { rel = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
+            catch { res.writeHead(400); res.end(); return; }
+            const file = path.resolve(root, '.' + rel);
+            if (file !== root && !file.startsWith(root + path.sep)) { res.writeHead(403); res.end(); return; }
+            const target = fs.existsSync(file) && fs.statSync(file).isFile() ? file : path.join(root, 'index.html');
+            const mime = {'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml'};
+            res.setHeader('Content-Type', mime[path.extname(target)] || 'application/octet-stream');
+            fs.createReadStream(target).pipe(res);
+          });
+          (async () => {
+            await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+            const origin = `http://127.0.0.1:${server.address().port}`;
+            browser = await chromium.launch({headless:true});
+            context = await browser.newContext({viewport:{width:1440,height:1000}});
+            await context.route('**/*', route => {
+              if (new URL(route.request().url()).origin === origin) return route.continue();
+              blocked.push(route.request().url()); return route.abort();
+            });
+            const page = await context.newPage();
+            page.on('pageerror', error => errors.push(error.message));
+            page.setDefaultTimeout(15000);
+            async function check(name, fn) {
+              try { await fn(); checks.push({name,status:'passed'}); }
+              catch(e) { checks.push({name,status:'failed',error:String(e)}); throw e; }
+            }
+            async function heading(text) { await page.getByRole('heading',{name:text,exact:true}).waitFor(); }
+            await check('dashboard renders and offers event links', async () => {
+              await page.goto(origin); await page.locator('a[href^="/events/"]').first().waitFor();
+              assert.ok(await page.locator('h1').count());
+              await page.screenshot({path:path.join(out,'dashboard.png')});
+            });
+            const eventPath = await page.locator('a[href^="/events/"]').first().getAttribute('href');
+            assert.match(eventPath, /^\/events\/[0-9a-f-]+$/i);
+            await page.evaluate(() => { window.__routerTestMarker = 'preserved'; });
+            await check('event link changes route without full reload', async () => {
+              await page.locator(`a[href="${eventPath}"]`).first().click();
+              await heading('Event Details'); assert.equal(new URL(page.url()).pathname,eventPath);
+              assert.equal(await page.evaluate(() => window.__routerTestMarker),'preserved');
+            });
+            await check('proof link resolves nested event route', async () => {
+              await page.getByRole('link',{name:'Merkle Proof',exact:true}).click();
+              await heading('Merkle Proof Verification'); assert.equal(new URL(page.url()).pathname,eventPath+'/proof');
+            });
+            await check('browser back restores event route', async () => {
+              await page.goBack(); await heading('Event Details');
+              assert.equal(await page.evaluate(() => window.__routerTestMarker),'preserved');
+            });
+            await check('browser forward restores proof route', async () => {
+              await page.goForward(); await heading('Merkle Proof Verification');
+            });
+            await page.goBack(); await heading('Event Details');
+            await check('certificate link resolves and retains demo disclaimer', async () => {
+              await page.getByRole('link',{name:'Certificate',exact:true}).click(); await heading('Event Certificate');
+              assert.equal(new URL(page.url()).pathname,eventPath+'/certificate');
+              await page.getByText('Demo data — not verified',{exact:true}).waitFor();
+              await page.screenshot({path:path.join(out,'certificate.png'),fullPage:true});
+            });
+            await check('print button invokes print and disclaimer remains in print media', async () => {
+              await page.evaluate(() => { window.__printCalls=0; window.print=()=>{ window.__printCalls++; }; });
+              await page.getByRole('button',{name:'Print',exact:true}).click();
+              assert.equal(await page.evaluate(()=>window.__printCalls),1);
+              await page.emulateMedia({media:'print'});
+              assert.ok(await page.getByText('Demo data — not verified',{exact:true}).isVisible());
+              await page.screenshot({path:path.join(out,'certificate-print.png'),fullPage:true});
+              await page.emulateMedia({media:'screen'});
+            });
+            await check('query string initializes search field', async () => {
+              await page.goto(origin+'/search?q=XAUUSD'); await heading('Search Events');
+              assert.equal(await page.getByPlaceholder('Search by Event ID, Trace ID, Symbol, or Event Type...').inputValue(),'XAUUSD');
+              await page.locator('a[href^="/events/"]').first().waitFor();
+              await page.screenshot({path:path.join(out,'search.png')});
+            });
+            await check('search result link resolves event parameter', async () => {
+              const link=page.locator('a[href^="/events/"]').first(); const expected=await link.getAttribute('href');
+              await link.click(); await heading('Event Details'); assert.equal(new URL(page.url()).pathname,expected);
+            });
+            await check('trace link resolves chain parameter', async () => {
+              const link=page.locator('a[href^="/chain/"]').first(); const expected=await link.getAttribute('href');
+              await link.click(); await page.locator('h1').filter({hasText:'Hash Chain'}).waitFor();
+              assert.equal(new URL(page.url()).pathname,expected);
+            });
+            for (const [suffix,title] of [['','Event Details'],['/proof','Merkle Proof Verification'],['/certificate','Event Certificate']]) {
+              await check('direct reload '+(suffix||'event'),async()=>{
+                await page.goto(origin+eventPath+suffix); await heading(title); await page.reload(); await heading(title);
+              });
+            }
+            await check('mobile certificate remains readable with disclaimer',async()=>{
+              await page.setViewportSize({width:390,height:844});
+              await heading('Event Certificate'); assert.ok(await page.getByText('Demo data — not verified',{exact:true}).isVisible());
+              await page.screenshot({path:path.join(out,'certificate-mobile.png'),fullPage:true});
+            });
+            await check('unmatched route renders not-found view',async()=>{
+              await page.goto(origin+'/__router_review_missing__');
+              await page.getByText('Page Not Found',{exact:true}).waitFor();
+            });
+            await check('no uncaught browser errors or external page navigation',async()=>{
+              assert.deepEqual(errors,[]); assert.equal(new URL(page.url()).origin,origin);
+            });
+            fs.writeFileSync(path.join(out,'browser-results.json'),JSON.stringify({status:'passed',browser:browser.version(),eventPath,checks,errors,blocked,limits:'Synthetic mock data; local static SPA server; not live deployment, exhaustive accessibility/visual assessment, or advisory exploit reproduction.'},null,2));
+          })().catch(error=>{
+            fs.writeFileSync(path.join(out,'browser-results.json'),JSON.stringify({status:'failed',error:String(error),checks,errors,blocked},null,2));
+            console.error(error);process.exitCode=1;
+          }).finally(async()=>{if(context) await context.close();if(browser)await browser.close(); await new Promise(resolve=>server.close(resolve));});
+          JSCODE
+          cp browser.cjs report/browser.cjs
+          timeout 180 node browser.cjs
+      - name: Hash every retained report
+        if: always()
+        run: |
+          python - <<'PYCODE'
+          import pathlib,json,hashlib
+          p=pathlib.Path('report'); p.mkdir(exist_ok=True)
+          d={str(f.relative_to(p)):hashlib.sha256(f.read_bytes()).hexdigest() for f in p.rglob('*') if f.is_file() and f.name!='files.sha256.json'}
+          (p/'files.sha256.json').write_text(json.dumps(d,indent=2)+'\n')
+          PYCODE
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: gui-router-${{ matrix.variant }}
+          path: report/
+          if-no-files-found: error
+          retention-days: 14
