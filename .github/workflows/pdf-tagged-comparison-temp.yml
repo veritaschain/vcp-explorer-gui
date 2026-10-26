@@ -1,0 +1,55 @@
+name: PDF tagging option comparison (temporary)
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 3b1a3fb32298a12ca04a5e8aaf7639ac6f0447ff
+          path: subject
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.22.1'
+      - name: Build fixed first-party mock UI without modification
+        working-directory: subject
+        run: |
+          test "$(git rev-parse HEAD)" = '3b1a3fb32298a12ca04a5e8aaf7639ac6f0447ff'
+          npm ci --no-audit
+          npm run build
+          npm test
+      - name: Install diagnostic-only Playwright and Chromium
+        run: |
+          npm install --prefix .pdf-browser --ignore-scripts --no-audit --save-exact playwright@1.56.1
+          node .pdf-browser/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Generate default and explicitly tagged PDFs
+        env:
+          PW_MODULE: ${{ github.workspace }}/.pdf-browser/node_modules/playwright
+          DIST_ROOT: ${{ github.workspace }}/subject/dist
+        run: |
+          timeout 180 node tools/diagnostics/pdf-tagged-comparison.cjs
+      - name: Inventory PDF structure trees and compare unchanged content
+        run: |
+          python3 -m venv .pdf-analyzer
+          .pdf-analyzer/bin/pip install --disable-pip-version-check --no-input pymupdf==1.26.1 pypdf==5.9.0
+          .pdf-analyzer/bin/python tools/diagnostics/pdf-tagged-inspect.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: pdf-tagging-comparison-evidence
+          path: pdf-tag-study/
+          if-no-files-found: warn
+          retention-days: 14
