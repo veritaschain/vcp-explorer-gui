@@ -1,0 +1,45 @@
+name: Materialize reviewed Vite update (temporary)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  materialize:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'audit/vite645-build-20261026'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create only the reviewed package-files branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/veritaschain/vcp-explorer-gui/actions/artifacts/12632379117/zip > approved.zip
+          python3 - <<'PY'
+          import os,json,hashlib,zipfile,pathlib,urllib.request
+          repo='veritaschain/vcp-explorer-gui'; base='23963c438187a68b062fc69f7d1102173c4122f7'
+          data=pathlib.Path('approved.zip').read_bytes()
+          assert len(data)==1671524 and hashlib.sha256(data).hexdigest()=='681f538493b3890eeddadf868dfdd5c549d63ea66869449a27e22c5609474fc3'
+          expected={'package.json':('c6e1edba666e89b2484f32313cdcf2e4d99a9d05279d0714be35062493cdd5a6','536f8bc955f145acde7082d3c7288f118e9a0797'),'package-lock.json':('1f08c5f9b71e467ac50f48b1a5342adc414b91b4003ec6799334a9ef34a08555','b767eb8a065a7772b3e6fc1cf768cae12b3a336e')}
+          files={}
+          with zipfile.ZipFile('approved.zip') as z:
+              for f,(sha,blob) in expected.items():
+                  b=z.read('candidate-'+f)
+                  assert hashlib.sha256(b).hexdigest()==sha
+                  assert hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()==blob
+                  files[f]=b.decode('utf-8')
+          def api(path,body=None):
+              req=urllib.request.Request('https://api.github.com/repos/'+repo+'/'+path,data=None if body is None else json.dumps(body).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'})
+              with urllib.request.urlopen(req,timeout=30) as r: return json.load(r)
+          assert api('git/ref/heads/main')['object']['sha']==base,'main moved; stop for re-review'
+          tree=api('git/commits/'+base)['tree']['sha'];entries=[]
+          for f,text in files.items():
+              blob=api('git/blobs',{'content':text,'encoding':'utf-8'})['sha'];assert blob==expected[f][1]
+              entries.append({'path':f,'mode':'100644','type':'blob','sha':blob})
+          newtree=api('git/trees',{'base_tree':tree,'tree':entries})['sha']
+          commit=api('git/commits',{'message':'fix(deps): update Vite to 6.4.5 after fixed-source regression comparison','tree':newtree,'parents':[base]})['sha']
+          assert api('git/ref/heads/main')['object']['sha']==base
+          ref=api('git/refs',{'ref':'refs/heads/fix/vite-6-4-5-20261026','sha':commit})
+          print(json.dumps({'branch':ref['ref'],'commit':commit,'files':list(files)},indent=2))
+          PY
