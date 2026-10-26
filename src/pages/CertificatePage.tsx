@@ -12,10 +12,10 @@ import {
 } from 'lucide-react';
 import { vcpClient } from '@/lib/api-client';
 import { formatDatePrecise, formatNumber, copyToClipboard } from '@/lib/utils';
-import { truncateHash } from '@/lib/crypto';
 import { EventTypeBadge } from '@/components/features/EventTypeBadge';
 import { useState } from 'react';
 import type { EventType } from '@/types/vcp';
+import './certificate-print.css';
 
 export function CertificatePage() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -74,9 +74,10 @@ export function CertificatePage() {
         <div className="flex min-w-0 items-center gap-3">
           <Link
             to={`/events/${eventId}`}
+            aria-label="Back to event"
             className="p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded-lg transition-all"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           </Link>
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
@@ -122,7 +123,7 @@ export function CertificatePage() {
 
         {/* Event Summary */}
         <div className="mb-8 grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
+          <div className="certificate-print-group">
             <h3 className="text-sm font-semibold text-vcp-500 print:text-gray-500 uppercase tracking-wider mb-3">
               Event Information
             </h3>
@@ -157,7 +158,7 @@ export function CertificatePage() {
             </div>
           </div>
 
-          <div>
+          <div className="certificate-print-group">
             <h3 className="text-sm font-semibold text-vcp-500 print:text-gray-500 uppercase tracking-wider mb-3">
               Timestamp & Precision
             </h3>
@@ -183,7 +184,7 @@ export function CertificatePage() {
         </div>
 
         {/* Cryptographic Proof */}
-        <div className="mb-8">
+        <div className="certificate-print-group mb-8">
           <h3 className="text-sm font-semibold text-vcp-500 print:text-gray-500 uppercase tracking-wider mb-3">
             Cryptographic Proof
           </h3>
@@ -195,13 +196,15 @@ export function CertificatePage() {
                   {certificate.security.event_hash}
                 </code>
                 <button
+                  type="button"
+                  aria-label="Copy event hash"
                   onClick={() => handleCopy(certificate.security.event_hash, 'event_hash')}
                   className="p-1 text-vcp-400 hover:text-white print:hidden"
                 >
                   {copiedField === 'event_hash' ? (
-                    <CheckCircle2 className="w-3 h-3 text-verify-400" />
+                    <CheckCircle2 className="w-3 h-3 text-verify-400" aria-hidden="true" />
                   ) : (
-                    <Copy className="w-3 h-3" />
+                    <Copy className="w-3 h-3" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -226,7 +229,7 @@ export function CertificatePage() {
         </div>
 
         {/* Merkle Proof */}
-        <div className="mb-8">
+        <div className="certificate-print-group mb-8" data-certificate-section="merkle-proof">
           <h3 className="text-sm font-semibold text-vcp-500 print:text-gray-500 uppercase tracking-wider mb-3">
             Merkle Inclusion Proof (RFC 6962)
           </h3>
@@ -249,7 +252,7 @@ export function CertificatePage() {
               {certificate.merkle_proof.audit_path.map((hash, i) => (
                 <div key={i} className="flex min-w-0 items-start gap-2">
                   <span className="w-6 flex-shrink-0 text-xs text-vcp-500 print:text-gray-500">L{i}</span>
-                  <code className="min-w-0 flex-1 break-all font-mono text-xs text-vcp-300 print:text-black">
+                  <code data-certificate-proof-hash className="min-w-0 flex-1 break-all font-mono text-xs text-vcp-300 print:text-black">
                     {hash}
                   </code>
                 </div>
@@ -259,7 +262,7 @@ export function CertificatePage() {
         </div>
 
         {/* Blockchain Anchor */}
-        <div className="mb-8">
+        <div className="certificate-print-group mb-8">
           <h3 className="text-sm font-semibold text-vcp-500 print:text-gray-500 uppercase tracking-wider mb-3">
             Blockchain Anchor
           </h3>
@@ -280,9 +283,10 @@ export function CertificatePage() {
                     href={`https://etherscan.io/tx/${certificate.anchor_info.tx_hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label="View demo transaction on Etherscan (opens in a new tab)"
                     className="p-1 text-vcp-400 hover:text-white print:hidden"
                   >
-                    <ExternalLink className="w-3 h-3" />
+                    <ExternalLink className="w-3 h-3" aria-hidden="true" />
                   </a>
                 </div>
               </div>
@@ -295,7 +299,7 @@ export function CertificatePage() {
         </div>
 
         {/* Footer */}
-        <div className="text-center pt-6 border-t border-vcp-800 print:border-gray-300">
+        <div className="certificate-print-group text-center pt-6 border-t border-vcp-800 print:border-gray-300">
           <p className="text-xs text-vcp-500 print:text-gray-500 mb-2">
             Certificate generated at {formatDatePrecise(certificate.generated_at)}
           </p>
@@ -346,30 +350,32 @@ interface CertFieldProps {
 
 function CertField({ label, value, mono, copyable, onCopy, copied }: CertFieldProps) {
   return (
-    <div className="min-w-0">
-      <span className="text-xs text-vcp-500 print:text-gray-500">{label}</span>
-      <div className="mt-0.5 flex min-w-0 items-center gap-2">
+    <dl className="min-w-0" data-certificate-field={label}>
+      <dt className="text-xs text-vcp-500 print:text-gray-500">{label}</dt>
+      <dd className="mt-0.5 flex min-w-0 items-center gap-2">
         {typeof value === 'string' ? (
           <p className={`min-w-0 break-all text-sm text-white print:text-black ${mono ? 'font-mono' : ''}`}>
-            {mono ? truncateHash(value, 16) : value}
+            {value}
           </p>
         ) : (
           value
         )}
         {copyable && onCopy && (
           <button
+            type="button"
+            aria-label={`Copy ${label}`}
             onClick={onCopy}
             className="p-1 text-vcp-400 hover:text-white print:hidden"
           >
             {copied ? (
-              <CheckCircle2 className="w-3 h-3 text-verify-400" />
+              <CheckCircle2 className="w-3 h-3 text-verify-400" aria-hidden="true" />
             ) : (
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3 h-3" aria-hidden="true" />
             )}
           </button>
         )}
-      </div>
-    </div>
+      </dd>
+    </dl>
   );
 }
 
