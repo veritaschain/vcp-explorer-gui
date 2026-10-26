@@ -1,6 +1,6 @@
 'use strict';
-// Bounded Chromium regression for the mock Explorer certificate.
-// Visual checks do not establish cryptographic verification, accessibility conformance or a real deployment.
+// Bounded first-party browser regression for the mock Explorer certificate.
+// These checks do not establish cryptographic or accessibility conformance.
 const playwright = require(process.env.PW_MODULE);
 const browserEngine = process.env.BROWSER_ENGINE || 'chromium';
 if (!['chromium', 'firefox', 'webkit'].includes(browserEngine)) {
@@ -51,7 +51,18 @@ let context;
   await firstEvent.waitFor();
   const eventPath = await firstEvent.getAttribute('href');
   assert.match(eventPath, /^\/events\/[0-9a-f-]+$/i);
+  const eventId = eventPath.split('/')[2];
   const certPath = eventPath + '/certificate';
+
+  // Obtain full identifiers from navigation targets, not from the certificate's
+  // potentially abbreviated display text; otherwise truncation could self-validate.
+  await page.goto(origin + eventPath);
+  await page.getByRole('heading', { name: 'Event Details', exact: true }).waitFor();
+  const traceLink = page.locator('a[href^="/chain/"]').first();
+  await traceLink.waitFor();
+  const tracePath = await traceLink.getAttribute('href');
+  assert.match(tracePath, /^\/chain\/[0-9a-f-]+$/i);
+  const traceId = tracePath.split('/')[2];
 
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 844 });
@@ -67,12 +78,22 @@ let context;
         certificateWidth: surface ? surface.getBoundingClientRect().width : null,
       };
     });
+    const displayedEvent = (await page.locator('[data-certificate-field="Event ID"] dd p').innerText()).trim();
+    const displayedTrace = (await page.locator('[data-certificate-field="Trace ID"] dd p').innerText()).trim();
+    const identifiersOk = displayedEvent === eventId && displayedTrace === traceId;
     const ok = geometry.docScrollWidth <= geometry.viewport + 1
       && geometry.bodyScrollWidth <= geometry.viewport + 1
-      && geometry.certificateWidth !== null && geometry.certificateWidth <= geometry.viewport + 1;
-    results.push({ kind: 'viewport', width, ok, geometry });
+      && geometry.certificateWidth !== null && geometry.certificateWidth <= geometry.viewport + 1
+      && identifiersOk;
+    results.push({ kind: 'viewport', width, ok, geometry, fullIdentifiers: identifiersOk });
     await page.screenshot({ path: path.join(output, 'certificate-' + width + '.png'), fullPage: true });
   }
+
+  const namedControls = await page.getByRole('link', { name: 'Back to event', exact: true }).count() === 1
+    && await page.getByRole('button', { name: 'Copy Event ID', exact: true }).count() === 1
+    && await page.getByRole('button', { name: 'Copy event hash', exact: true }).count() === 1
+    && await page.getByRole('link', { name: 'View demo transaction on Etherscan (opens in a new tab)', exact: true }).count() === 1;
+  results.push({ kind: 'certificate-icon-accessible-names', ok: namedControls });
 
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto(origin + certPath);
@@ -89,6 +110,13 @@ let context;
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(origin + certPath);
   await page.getByText('Demo data — not verified', { exact: true }).waitFor();
+  const proofHashes = (await page.locator('[data-certificate-proof-hash]').allTextContents()).map(x => x.trim());
+  assert.ok(proofHashes.length > 0 && proofHashes.length <= 16, 'Bounded proof fixture required');
+  assert.ok(proofHashes.every(x => /^[0-9a-f]{64}$/i.test(x)), 'Full sibling hashes required');
+  fs.writeFileSync(path.join(output, 'pdf-expectations.json'), JSON.stringify({
+    event_id: eventId, trace_id: traceId, proof_hashes: proofHashes,
+    source: 'Identifiers from event/trace route hrefs; sibling hashes from the displayed bounded mock proof.',
+  }, null, 2) + '\n');
   await page.evaluate(() => {
     window.__printInvocations = 0;
     window.print = () => { window.__printInvocations += 1; };
@@ -113,8 +141,8 @@ let context;
     && print.siteHeader === 'none' && print.sidebar === 'none';
   results.push({ kind: 'print-media', ok: printOk, details: print, printButtonInvoked: printed });
   await page.screenshot({ path: path.join(output, 'certificate-print.png'), fullPage: true });
-  // Chromium can generate an actual PDF; Firefox/WebKit print-media checks do not
-  // claim PDF output. Save the binary for independent pagination/text inspection.
+  // Keep the existing PDF export options. Tagging is observed, not silently
+  // enabled only in CI to imply that the user's print dialog is accessible.
   if (browserEngine === 'chromium') {
     const pdf = await page.pdf({
       path: path.join(output, 'certificate-print.pdf'),
@@ -131,7 +159,7 @@ let context;
     status: allPassed ? 'passed' : 'failed',
     browserEngine, browser: browser.version(),
     target: certPath, checks: results,
-    limits: 'Built synthetic mock UI; Chromium/Firefox/WebKit viewports; actual PDF generated only in Chromium; PDF page layout requires separate inspection; no live site or accessibility conformance.',
+    limits: 'Built synthetic mock UI; Chromium/Firefox/WebKit viewports; actual PDF only in Chromium. Icon-name and field checks are not a screen-reader/PDF-UA audit or public deployment verification.',
   }, null, 2) + '\n');
   if (!allPassed) throw new Error('Responsive/print checks failed: ' + JSON.stringify(results.filter(x => !x.ok)));
 })().catch(error => {
