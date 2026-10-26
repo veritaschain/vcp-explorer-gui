@@ -1,0 +1,147 @@
+name: GUI Vite comparison (temporary)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [baseline, vite645]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 23963c438187a68b062fc69f7d1102173c4122f7
+          path: subject
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: subject/.nvmrc
+      - name: Audit and test fixed baseline or Vite-only candidate
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          python3 - <<'PY'
+          import os, json, hashlib, pathlib, subprocess, shutil
+          root=pathlib.Path('subject').resolve(); out=pathlib.Path('report').resolve(); out.mkdir()
+          commands=[]
+          def record(name,args,cwd=root,allowed=(0,),timeout=240):
+              p=subprocess.run(args,cwd=cwd,capture_output=True,timeout=timeout)
+              (out/(name+'.stdout')).write_bytes(p.stdout); (out/(name+'.stderr')).write_bytes(p.stderr)
+              (out/(name+'.exit')).write_text(str(p.returncode)+'\n')
+              commands.append({'name':name,'argv':args,'exit':p.returncode}); (out/'commands.json').write_text(json.dumps(commands,indent=2))
+              if p.returncode not in allowed: raise RuntimeError(name+' failed: '+str(p.returncode))
+              return p.stdout
+          def digest(b): return hashlib.sha256(b).hexdigest()
+          def tracked():
+              names=subprocess.check_output(['git','ls-files','-z'],cwd=root).decode().split('\0')
+              return {n:digest((root/n).read_bytes()) for n in names if n}
+          def audit(name,extra):
+              raw=record(name,['npm','audit','--package-lock-only','--json']+extra,allowed=(0,1))
+              d=json.loads(raw); assert not d.get('error') and d.get('auditReportVersion')==2
+              assert isinstance(d.get('vulnerabilities'),dict) and isinstance(d.get('metadata',{}).get('vulnerabilities'),dict)
+              return d['metadata']['vulnerabilities']
+          assert record('source-commit',['git','rev-parse','HEAD']).decode().strip()=='23963c438187a68b062fc69f7d1102173c4122f7'
+          expected={'package.json':'8675f26718c40b6c7bd0e11742137659fb886d83728ead81b4364fd0e5ad3af0','package-lock.json':'da96d7a985753b4604809c7079b0462f7f97916566c2ef214a000c2c819778a6'}
+          for f,h in expected.items():
+              b=(root/f).read_bytes(); assert digest(b)==h; (out/('baseline-'+f)).write_bytes(b)
+          before=tracked(); (out/'tracked-before.json').write_text(json.dumps(before,indent=2))
+          record('source-archive',['git','archive','--format=tar.gz','--output='+str(out/'source-baseline.tar.gz'),'HEAD'])
+          record('node',['node','--version']); record('npm',['npm','--version'])
+          for name,pkg in [('vite-metadata','vite@6.4.5'),('plugin-metadata','@vitejs/plugin-react@4.7.0'),('selector-metadata','postcss-selector-parser@6.1.5')]:
+              record(name,['npm','view',pkg,'--json'])
+          ba=audit('baseline-all',[]); bp=audit('baseline-production',['--omit=dev'])
+          baseline=json.loads((root/'package.json').read_text()); oldlock=json.loads((root/'package-lock.json').read_text())
+          if os.environ['VARIANT']=='vite645':
+              baseline['devDependencies']['vite']='6.4.5'; (root/'package.json').write_text(json.dumps(baseline,indent=2)+'\n')
+              record('resolve',['npm','install','--package-lock-only','--ignore-scripts','--no-audit'])
+          assert json.loads((root/'package.json').read_text())==baseline
+          lock=json.loads((root/'package-lock.json').read_text())
+          runtime=lambda d:{k:v for k,v in d['packages'].items() if k and not v.get('dev',False)}
+          assert runtime(lock)==runtime(oldlock), 'runtime dependency drift'
+          assert lock['packages']['node_modules/postcss-selector-parser']==oldlock['packages']['node_modules/postcss-selector-parser']
+          for f in expected: shutil.copyfile(root/f,out/('candidate-'+f))
+          record('install',['npm','ci','--ignore-scripts','--no-audit'])
+          record('dependency-tree',['npm','ls','--all','--json'])
+          ca=audit('candidate-all',[]); cp=audit('candidate-production',['--omit=dev'])
+          record('lint',['npm','run','lint']); record('build',['npm','run','build']); record('tests',['npm','test'])
+          record('diff',['git','diff','--','package.json','package-lock.json'])
+          after=tracked(); (out/'tracked-after.json').write_text(json.dumps(after,indent=2))
+          changed=[k for k in before if before[k]!=after[k]]; assert set(changed)<=set(expected)
+          if os.environ['VARIANT']=='baseline': assert changed==[]
+          shutil.copytree(root/'dist',out/'dist')
+          for f in ['package.json','dist/parser.js']:
+              shutil.copyfile(root/'node_modules/postcss-selector-parser'/f,out/('selector-'+f.replace('/','-')))
+          (out/'summary.json').write_text(json.dumps({'variant':os.environ['VARIANT'],'source':'23963c438187a68b062fc69f7d1102173c4122f7','workflow':os.environ['GITHUB_SHA'],'baseline_all':ba,'baseline_production':bp,'candidate_all':ca,'candidate_production':cp,'changed_tracked':changed,'runtime_entries_unchanged':len(runtime(lock)),'limits':'First-party build/regression checks, not deployment, full security assessment or independent reproduction.'},indent=2))
+          PY
+      - name: Retrieve digest-pinned browser harness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/veritaschain/vcp-explorer-gui/actions/artifacts/12631954181/zip > previous-browser.zip
+          python3 - <<'PY'
+          import hashlib,zipfile,pathlib
+          b=pathlib.Path('previous-browser.zip').read_bytes()
+          assert hashlib.sha256(b).hexdigest()=='822d0902e546069df9ce6aff45e4f7cb2adc7ae1a25249a003c7208b3ed5e03c'
+          with zipfile.ZipFile('previous-browser.zip') as z: s=z.read('browser.cjs')
+          assert hashlib.sha256(s).hexdigest()=='89dd042cd9b0433454ed60e132f657893db275a8a126997ee1ec8517d5c742f1'
+          s=s.replace(b'mobile certificate remains readable with disclaimer',b'mobile heading and disclaimer are visible (not a layout assessment)')
+          pathlib.Path('report/browser.cjs').write_bytes(s)
+          PY
+      - name: Browser and local dev-server checks
+        run: |
+          python3 - <<'PY'
+          import pathlib,subprocess,json,os,time,urllib.request
+          out=pathlib.Path('report').resolve(); tools=pathlib.Path('browser-tools').resolve(); tools.mkdir()
+          (tools/'package.json').write_text('{"private":true}')
+          def run(name,args,cwd,env=None):
+              p=subprocess.run(args,cwd=cwd,capture_output=True,timeout=240,env=env)
+              (out/(name+'.stdout')).write_bytes(p.stdout); (out/(name+'.stderr')).write_bytes(p.stderr); (out/(name+'.exit')).write_text(str(p.returncode)+'\n')
+              if p.returncode: raise RuntimeError(name+' failed')
+          run('playwright-install',['npm','install','--save-exact','--ignore-scripts','--no-audit','playwright@1.56.1'],tools)
+          run('chromium-install',['node',str(tools/'node_modules/playwright/cli.js'),'install','--with-deps','chromium'],tools)
+          for f in ['package.json','package-lock.json']: (out/('browser-tools-'+f)).write_bytes((tools/f).read_bytes())
+          run('browser',['node',str(out/'browser.cjs')],pathlib.Path.cwd(),dict(os.environ,PW_MODULE=str(tools/'node_modules/playwright')))
+          log=open(out/'dev-server.log','wb'); proc=subprocess.Popen(['node','node_modules/vite/bin/vite.js','--host','127.0.0.1','--port','5178','--strictPort'],cwd='subject',stdout=log,stderr=subprocess.STDOUT)
+          checks=[]
+          try:
+              for n in range(60):
+                  if proc.poll() is not None: raise RuntimeError('dev server exited')
+                  try:
+                      with urllib.request.urlopen('http://127.0.0.1:5178/',timeout=2) as r: assert r.status==200
+                      break
+                  except OSError: time.sleep(.5)
+              else: raise RuntimeError('dev server timeout')
+              for path,marker in [('/','id="root"'),('/src/main.tsx','createRoot'),('/@vite/client','WebSocket'),('/search','id="root"')]:
+                  with urllib.request.urlopen('http://127.0.0.1:5178'+path,timeout=10) as r:
+                      body=r.read().decode(); assert r.status==200 and marker in body
+                      checks.append({'path':path,'status':r.status,'expected_marker_present':True})
+              (out/'dev-results.json').write_text(json.dumps({'checks':checks,'limits':'Loopback smoke checks only; no exploit or external proxy test.'},indent=2))
+          finally:
+              proc.terminate()
+              try: proc.wait(timeout=10)
+              except subprocess.TimeoutExpired: proc.kill();proc.wait(timeout=5)
+              log.close()
+          PY
+      - name: Hash retained reports
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,hashlib
+          p=pathlib.Path('report');p.mkdir(exist_ok=True)
+          files={str(f.relative_to(p)):hashlib.sha256(f.read_bytes()).hexdigest() for f in sorted(p.rglob('*')) if f.is_file() and f.name!='files.sha256.json'}
+          (p/'files.sha256.json').write_text(json.dumps(files,indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: gui-vite-${{ matrix.variant }}
+          path: report/
+          retention-days: 14
+          if-no-files-found: error
