@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   FileText,
-  Download,
+  AlertTriangle,
   Shield,
   CheckCircle2,
   ExternalLink,
@@ -68,10 +68,10 @@ export function CertificatePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between print:hidden">
+        <div className="flex min-w-0 items-center gap-3">
           <Link
             to={`/events/${eventId}`}
             className="p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded-lg transition-all"
@@ -87,20 +87,16 @@ export function CertificatePage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button onClick={handlePrint} className="btn-secondary inline-flex items-center gap-2">
-            <Printer className="w-4 h-4" />
-            Print
-          </button>
-          <button className="btn-primary inline-flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            Download PDF
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={handlePrint} className="btn-secondary inline-flex items-center gap-2">
+            <Printer className="h-4 w-4" />
+            Print / Save as PDF
           </button>
         </div>
       </div>
 
       {/* Certificate Document */}
-      <div className="glass-card p-8 print:p-4 print:shadow-none print:border-gray-300">
+      <div className="certificate-print-surface glass-card min-w-0 p-4 sm:p-8 print:border-gray-300 print:p-4 print:shadow-none">
         {/* Certificate Header */}
         <div className="text-center border-b border-vcp-800 pb-6 mb-6 print:border-gray-300">
           <div className="flex justify-center mb-4">
@@ -118,14 +114,14 @@ export function CertificatePage() {
 
         {/* Verification Status */}
         <div className="flex items-center justify-center gap-3 mb-8 p-4 bg-verify-500/10 border border-verify-500/20 rounded-lg print:bg-green-50 print:border-green-200">
-          <CheckCircle2 className="w-6 h-6 text-verify-400 print:text-green-600" />
-          <span className="font-semibold text-verify-400 print:text-green-700">
+          <AlertTriangle className="h-6 w-6 text-anomaly-400 print:text-black" aria-hidden="true" />
+          <span className="font-semibold text-anomaly-300 print:text-black">
             Demo data — not verified
           </span>
         </div>
 
         {/* Event Summary */}
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="mb-8 grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <h3 className="text-sm font-semibold text-vcp-500 print:text-gray-500 uppercase tracking-wider mb-3">
               Event Information
@@ -194,8 +190,8 @@ export function CertificatePage() {
           <div className="space-y-4 bg-vcp-900/50 print:bg-gray-100 rounded-lg p-4">
             <div>
               <span className="text-xs text-vcp-500 print:text-gray-500">Event Hash (SHA-256)</span>
-              <div className="flex items-center gap-2 mt-1">
-                <code className="flex-1 text-xs text-verify-400 print:text-green-700 font-mono break-all">
+              <div className="mt-1 flex min-w-0 items-center gap-2">
+                <code className="min-w-0 flex-1 break-all font-mono text-xs text-verify-400 print:text-black">
                   {certificate.security.event_hash}
                 </code>
                 <button
@@ -251,9 +247,9 @@ export function CertificatePage() {
             </div>
             <div className="space-y-1">
               {certificate.merkle_proof.audit_path.map((hash, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-xs text-vcp-500 print:text-gray-500 w-6">L{i}</span>
-                  <code className="text-xs text-vcp-300 print:text-gray-600 font-mono truncate">
+                <div key={i} className="flex min-w-0 items-start gap-2">
+                  <span className="w-6 flex-shrink-0 text-xs text-vcp-500 print:text-gray-500">L{i}</span>
+                  <code className="min-w-0 flex-1 break-all font-mono text-xs text-vcp-300 print:text-black">
                     {hash}
                   </code>
                 </div>
@@ -268,16 +264,16 @@ export function CertificatePage() {
             Blockchain Anchor
           </h3>
           <div className="bg-verify-500/10 print:bg-green-50 border border-verify-500/20 print:border-green-200 rounded-lg p-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
               <CertField label="Network" value={certificate.anchor_info.network} />
               <CertField
                 label="Block Number"
                 value={`#${formatNumber(certificate.anchor_info.block_number)}`}
               />
-              <div className="col-span-2">
+              <div className="min-w-0 sm:col-span-2">
                 <span className="text-xs text-vcp-500 print:text-gray-500">Transaction Hash</span>
                 <div className="flex items-center gap-2 mt-1">
-                  <code className="flex-1 text-xs text-vcp-300 print:text-gray-600 font-mono truncate">
+                  <code className="min-w-0 flex-1 break-all font-mono text-xs text-vcp-300 print:text-black">
                     {certificate.anchor_info.tx_hash}
                   </code>
                   <a
@@ -350,11 +346,11 @@ interface CertFieldProps {
 
 function CertField({ label, value, mono, copyable, onCopy, copied }: CertFieldProps) {
   return (
-    <div>
+    <div className="min-w-0">
       <span className="text-xs text-vcp-500 print:text-gray-500">{label}</span>
-      <div className="flex items-center gap-2 mt-0.5">
+      <div className="mt-0.5 flex min-w-0 items-center gap-2">
         {typeof value === 'string' ? (
-          <p className={`text-sm text-white print:text-black ${mono ? 'font-mono' : ''}`}>
+          <p className={`min-w-0 break-all text-sm text-white print:text-black ${mono ? 'font-mono' : ''}`}>
             {mono ? truncateHash(value, 16) : value}
           </p>
         ) : (

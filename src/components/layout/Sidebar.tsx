@@ -83,7 +83,7 @@ function NavItem({ name, href, icon: Icon }: NavItemProps) {
 
 export function Sidebar() {
   return (
-    <aside className="fixed left-0 top-16 bottom-0 w-64 bg-vcp-900/50 backdrop-blur-sm border-r border-vcp-800/50 overflow-y-auto custom-scrollbar">
+    <aside aria-label="Desktop navigation" className="fixed left-0 top-16 bottom-0 hidden w-64 overflow-y-auto border-r border-vcp-800/50 bg-vcp-900/50 backdrop-blur-sm custom-scrollbar lg:block">
       <nav className="p-4 space-y-6">
         {/* Main Navigation */}
         <div>
