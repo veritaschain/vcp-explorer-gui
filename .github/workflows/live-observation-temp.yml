@@ -1,0 +1,93 @@
+name: Public Explorer deployment observation (temporary)
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 45aa4d4ef6f5da3598aa061fb629be81e0480ecd
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24.22.1'
+      - name: Build precise main revision
+        run: |
+          npm ci --ignore-scripts --no-audit
+          npm run build
+          node -e 'console.log(require("./package.json").name)'
+      - name: Read public index and same-host script assets without executing them
+        run: |
+          python3 - <<'PY'
+          import hashlib,html.parser,json,pathlib,time,urllib.parse,urllib.request,urllib.error
+          report=pathlib.Path('deploy-observation');report.mkdir(exist_ok=True)
+          url='https://veritaschain.org/explorer/app/'
+          class Assets(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__();self.urls=[]
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=='script' and a.get('src'):self.urls.append(a['src'])
+                  if tag=='link' and a.get('rel')=='stylesheet' and a.get('href'):self.urls.append(a['href'])
+          def get(u,max_bytes):
+              req=urllib.request.Request(u,headers={'User-Agent':'VSO-Explorer-ReadOnly-DeploymentCheck/1.0','Accept-Encoding':'identity'})
+              with urllib.request.urlopen(req,timeout=15) as response:
+                  final=response.geturl()
+                  if urllib.parse.urlparse(final).hostname!='veritaschain.org':
+                      raise ValueError('Redirect outside confirmed first-party hostname')
+                  b=response.read(max_bytes+1)
+                  if len(b)>max_bytes:raise ValueError('Response too large')
+                  return {'url':final,'status':response.status,'content_type':response.headers.get('Content-Type'),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'body':b}
+          local={}
+          for p in pathlib.Path('dist/assets').glob('*'):
+              if p.suffix in {'.js','.css'}:
+                  b=p.read_bytes()
+                  local[p.name]={'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b)}
+          result={'source_commit':'45aa4d4ef6f5da3598aa061fb629be81e0480ecd','target':url,'method':'read-only GET first-party HTML and same-host JS/CSS, no remote JS execution','local_assets':local,'checked_at_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'assets':[],'status':'INDETERMINATE'}
+          try:
+              page=get(url,1_000_000)
+              result['html']={k:v for k,v in page.items() if k!='body'}
+              html=page['body'].decode('utf-8','replace')
+              parser=Assets();parser.feed(html)
+              seen=set()
+              localhashes={v['sha256'] for v in local.values()}
+              for raw in parser.urls:
+                  full=urllib.parse.urljoin(page['url'],raw)
+                  pu=urllib.parse.urlparse(full)
+                  if pu.scheme!='https' or pu.hostname!='veritaschain.org' or full in seen:continue
+                  seen.add(full)
+                  asset={'url':full}
+                  try:
+                      a=get(full,12_000_000)
+                      asset.update({k:v for k,v in a.items() if k!='body'})
+                      asset['matches_local_built_asset']=a['sha256'] in localhashes
+                      if full.endswith('.js') or '.js?' in full:
+                          js=a['body'].decode('utf-8','replace')
+                          asset['visible_string_flags']={
+                             'new_print_label':'Print / Save as PDF' in js,
+                             'old_pdf_label':'Download PDF' in js,
+                             'explicit_demo_disclaimer':'Demo data' in js and 'not verified' in js,
+                          }
+                  except Exception as e:asset['error']=type(e).__name__+': '+str(e)[:160]
+                  result['assets'].append(asset)
+              result['status']='MATCHING_BUNDLE_FOUND' if any(x.get('matches_local_built_asset') for x in result['assets']) else 'NO_BYTE_IDENTICAL_BUNDLE_FOUND'
+          except Exception as e:result['error']=type(e).__name__+': '+str(e)[:300];result['status']='UNREACHABLE_OR_UNINSPECTABLE'
+          (report/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps({k:v for k,v in result.items() if k not in ['local_assets']},indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: public-explorer-observation
+          path: deploy-observation/
+          if-no-files-found: warn
+          retention-days: 14
