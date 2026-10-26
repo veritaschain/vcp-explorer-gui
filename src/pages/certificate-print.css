@@ -3,7 +3,8 @@
    inconclusive and leaving muted labels at about 3.7:1 on the rendered card.
    Keep the surrounding grid and the existing white print presentation. */
 @media screen {
-  .certificate-print-surface {
+  /* Beat the shared .glass-card rule regardless of compiled CSS order. */
+  .certificate-print-surface.glass-card {
     background-color: #133252;
     backdrop-filter: none;
   }
