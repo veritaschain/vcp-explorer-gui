@@ -33,6 +33,21 @@ A demo dashboard (mock data by default) for exploring, searching, and verifying 
 - Client-side SHA-256 computation using Web Crypto API
 - Visual step-by-step verification process
 
+The inclusion check requires a supplied `merkle_proof.tree_size` (positive
+JavaScript safe integer) as well as the leaf index, full 32-byte hexadecimal
+hashes and an exact-length audit path. Legacy API responses without a tree size
+are shown as **not verified**; the GUI does not infer it from the path. The
+traversal handles uneven trees using RFC 9162 §2.1.3.2. A match is only against
+the supplied root and size: it does not authenticate them, recompute the event
+hash from its contents, verify a signature or check an external anchor.
+
+The demo uses a deterministic 12-leaf synthetic fixture with real inclusion
+paths over `SHA-256("0")` through `SHA-256("11")`. Those values are not hashes of
+the displayed event payloads and are not signed or anchored evidence. The
+regression tests reconstruct the fixture independently with `node:crypto` and
+exercise every leaf of balanced and uneven trees, malformed inputs, missing
+sizes, path-length errors and indices above the 32-bit range.
+
 ### 📜 Certificate Generation
 - Event certificate view (JSON/print; not a certification or compliance finding)
 - Print view (browser-managed Print / Save as PDF); the resulting PDF has **not** been validated as tagged, screen-reader accessible or PDF/UA conformant. See [PDF print accessibility status](docs/PDF_PRINT_ACCESSIBILITY.md).

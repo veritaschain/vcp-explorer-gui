@@ -223,6 +223,9 @@ export interface EventDetailResponse {
 export interface MerkleProof {
   root_hash: string;
   leaf_index: number;
+  // Legacy API fixtures omit this. A missing size cannot produce a GUI match;
+  // its presence alone does not authenticate either the size or the root.
+  tree_size?: number;
   audit_path: string[];
 }
 
