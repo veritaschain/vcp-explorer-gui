@@ -1,0 +1,20 @@
+/* Keep compact certificate sections together when they fit on a page.
+   Oversized sections may still fragment; this is not a general pagination
+   guarantee, and it never hides or clips overflow to manufacture a pass. */
+@media print {
+  .certificate-print-surface .certificate-print-group {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .certificate-print-surface h2,
+  .certificate-print-surface h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .certificate-print-surface dl {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
