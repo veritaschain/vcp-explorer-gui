@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Search,
@@ -8,6 +8,7 @@ import {
   Building2,
   Activity,
   ChevronRight,
+  FlaskConical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +31,11 @@ const navigation = [
 ];
 
 const verification = [
+  {
+    name: 'Evidence Demo',
+    href: '/evidence-demo',
+    icon: FlaskConical,
+  },
   {
     name: 'Merkle Proofs',
     href: '/search?view=proofs',
@@ -82,6 +88,7 @@ function NavItem({ name, href, icon: Icon }: NavItemProps) {
 }
 
 export function Sidebar() {
+  const isEvidenceDemo = useLocation().pathname === '/evidence-demo';
   return (
     <aside aria-label="Desktop navigation" className="fixed left-0 top-16 bottom-0 hidden w-64 overflow-y-auto border-r border-vcp-800/50 bg-vcp-900/50 backdrop-blur-sm custom-scrollbar lg:block">
       <nav className="p-4 space-y-6">
@@ -122,7 +129,7 @@ export function Sidebar() {
         </div>
 
         {/* Quick Stats */}
-        <div className="mt-8 mx-3 p-4 bg-vcp-800/30 rounded-lg border border-vcp-700/30">
+        {!isEvidenceDemo && <div className="mt-8 mx-3 p-4 bg-vcp-800/30 rounded-lg border border-vcp-700/30">
           <h4 className="text-xs font-semibold text-vcp-400 uppercase tracking-wider mb-3">
             Network Stats
           </h4>
@@ -140,16 +147,16 @@ export function Sidebar() {
               <span className="text-sm font-mono text-verify-400">5m ago</span>
             </div>
           </div>
-        </div>
+        </div>}
 
         {/* VCP Version Badge */}
         <div className="mx-3 p-3 bg-gradient-to-br from-vcp-600/20 to-verify-600/10 rounded-lg border border-vcp-600/20">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 bg-verify-500 rounded-full" />
-            <span className="text-xs font-semibold text-white">Spec: VCP v1.2 · demo data v1.0</span>
+            <span className="text-xs font-semibold text-white">{isEvidenceDemo ? 'VCP v1.2 · SDK evidence demo' : 'Spec: VCP v1.2 · demo data v1.0'}</span>
           </div>
           <p className="text-xs text-vcp-400">
-            Demo data — not verified · SHA-256 · Ed25519
+            {isEvidenceDemo ? 'Synthetic inputs · limited verification' : 'Demo data — not verified · SHA-256 · Ed25519'}
           </p>
         </div>
       </nav>

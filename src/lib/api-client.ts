@@ -1,5 +1,6 @@
 // VCP Explorer API Client v1.1
-// API wrapper with mock fallback (mock data is used by default)
+// API wrapper with an explicit mock mode (mock data is used by default).
+// Network errors never fall back to synthetic data.
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import type {
@@ -14,12 +15,13 @@ import type {
   APIError,
 } from '@/types/vcp';
 import { getMockEvents, getMockEventDetail, getMockProof, getMockCertificate, getMockSystemStatus, getMockCertifiedEntities } from '@/mock-data/events';
+import { resolveUseMock } from './api-config';
 
 // Configuration
 const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_BASE_URL || 'https://explorer.veritaschain.org/api/v1',
   timeout: 10000,
-  useMock: import.meta.env.VITE_USE_MOCK === 'true' || true, // Default to mock for demo
+  useMock: resolveUseMock(import.meta.env.VITE_USE_MOCK),
 };
 
 class VCPExplorerClient {

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, Shield, ExternalLink, Menu, X } from 'lucide-react';
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const isEvidenceDemo = useLocation().pathname === '/evidence-demo';
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +99,7 @@ export function Header() {
           ['Dashboard', '/'],
           ['Search Events', '/search'],
           ['Hash Chain', '/chain'],
+          ['Evidence Demo', '/evidence-demo'],
           ['Merkle Proofs', '/search?view=proofs'],
           ['Certificates', '/search?view=certificates'],
         ].map(([label, href]) => (
@@ -111,7 +113,7 @@ export function Header() {
           </Link>
         ))}
         <p className="mt-3 border-t border-vcp-800 pt-3 text-xs text-vcp-300">
-          VCP v1.2 · Demo data — not verified
+          {isEvidenceDemo ? 'VCP v1.2 · Synthetic evidence · limited verification' : 'VCP v1.2 · Demo data — not verified'}
         </p>
       </nav>
     </header>

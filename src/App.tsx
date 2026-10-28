@@ -7,6 +7,7 @@ import { CertificatePage } from '@/pages/CertificatePage';
 import { HashChainPage } from '@/pages/HashChainPage';
 import { SearchPage } from '@/pages/SearchPage';
 import { NotFound } from '@/pages/NotFound';
+import { EvidenceDemoPage } from '@/pages/EvidenceDemoPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/evidence-demo" element={<EvidenceDemoPage />} />
         <Route path="/events/:eventId" element={<EventDetail />} />
         <Route path="/events/:eventId/proof" element={<MerkleProofPage />} />
         <Route path="/events/:eventId/certificate" element={<CertificatePage />} />

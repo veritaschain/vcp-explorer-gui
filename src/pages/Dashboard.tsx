@@ -105,6 +105,14 @@ export function Dashboard() {
         </div>
       </div>
 
+      <Link to="/evidence-demo" className="glass-card flex items-center justify-between gap-4 p-5 transition-colors hover:border-vcp-400">
+        <div>
+          <h2 className="font-semibold text-white">SDK Evidence Demo</h2>
+          <p className="mt-1 text-sm text-vcp-300">Compare intact, tampered and missing-key evidence through a connected verification API.</p>
+        </div>
+        <ArrowRight aria-hidden="true" className="h-5 w-5 shrink-0 text-vcp-300" />
+      </Link>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
