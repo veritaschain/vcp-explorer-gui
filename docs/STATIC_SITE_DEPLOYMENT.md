@@ -1,8 +1,10 @@
-# Static Explorer deployment profile (not yet deployed)
+# Static Explorer deployment profile
 
 The `veritaschain/vcp-explorer-gui` repository contains a mock-data reference UI.
 The public `https://veritaschain.org/explorer/app/` path is presently served from
 `veritaschain/vcp-site/explorer/app/`, **not** automatically from this repository.
+The legacy static Explorer is already live there. The new Evidence Demo is not
+published, and no public Node evidence-verification API has been verified.
 
 ## Why this profile exists
 
@@ -22,7 +24,9 @@ Pin the source commit, Node/npm version and lockfile in the build record.
 
 ```sh
 npm ci
-VITE_ROUTER_MODE=hash npm run build -- --base=/explorer/app/
+VITE_USE_MOCK=true VITE_ROUTER_MODE=hash \
+  VITE_API_BASE_URL= VITE_EVIDENCE_API_BASE_URL= \
+  npm run build -- --base=/explorer/app/
 npm test
 ```
 
@@ -32,6 +36,13 @@ The generated `dist/index.html` must reference
 The Chromium static-subpath CI must exercise search, event, certificate,
 direct hash-route reloads and the explicit **Demo data — not verified**
 label before publication.
+
+This build keeps the legacy routes in mock mode and leaves Evidence Demo
+unconfigured. A future public Evidence Demo needs a verified public API URL
+supplied through `VITE_EVIDENCE_API_BASE_URL` at **build time** (or an explicitly
+configured `VITE_API_BASE_URL`). Static files alone do not deploy that API.
+Do not copy the local launcher's build to production: it embeds loopback API
+URLs and uses the local browser-router profile, not this static-host profile.
 
 ## Review and publication boundaries
 
@@ -49,9 +60,11 @@ label before publication.
 
 ## Claims that remain prohibited
 
-- The GUI's `VITE_USE_MOCK=false` value does not activate a live backend
-  under the current `src/lib/api-client.ts`; this reference UI still uses
-  synthetic data. Do not advertise live verification or deployed Explorer API.
+- `VITE_USE_MOCK=false` now enables API requests for the legacy routes;
+  it does not deploy or establish the availability of a backend. The public
+  legacy Explorer still shows synthetic data. Evidence Demo uses its configured
+  API independently of this flag. Do not advertise a deployed evidence service
+  until its API and published GUI have been verified.
 - A displayed event 'certificate' is a demonstration/print view, not
   VeritasChain Certified (VC-Certified) status or a compliance finding.
 - PDF printing is handled by the browser; it is not a custom exported

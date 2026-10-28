@@ -3,7 +3,7 @@
 > **Status correction — 25 October 2026**
 >
 > - This is first-party demo code by VeritasChain Co., Ltd., which operates the VeritasChain Standards Organization (VSO). It was written against VCP v1.0, which is superseded by VCP v1.2 (Released, tag `v1.2.0`).
-> - Mock data is used by default: `src/lib/api-client.ts` sets `useMock` to `... || true`, so `VITE_USE_MOCK=false` does not switch it off. Event hashes, Merkle roots, anchors (including Ethereum transaction details) and certificates shown are demo values; anchors are not checked against any chain. The UI shows "Demo data — not verified" where it used to say "Cryptographically Verified & Blockchain Anchored".
+> - The legacy dashboard uses mock data by default. As corrected on 28 October 2026, `VITE_USE_MOCK=false` enables API requests; omitted, empty or `true` preserves mock mode, and other values are rejected. Network errors never fall back to mock data. The legacy events, anchors (including Ethereum transaction details) and certificates remain demo values, without on-chain verification. The separate Evidence Demo below runs real SDK checks over synthetic evidence and reports its limits explicitly.
 > - Conformance to any VCP tier, or to VAP, has not been independently established. There are zero external implementations of VAP or any of its profiles, including VCP. Not certified: VSO does not issue certifications itself; the scheme requires a Conformity Assessment Body (CAB) independent of the scheme owner, and the only registered CAB, VeritasChain Co., Ltd., is not independent (VAP v1.2 ERRATA E-2026-10-21). Event "certificates" here are JSON/print views, not certification or a compliance finding.
 
 **VeritasChain Protocol Explorer - Web Dashboard for VCP Event Exploration and Verification**
@@ -16,6 +16,27 @@
 A demo dashboard (mock data by default) for exploring, searching, and verifying VeritasChain Protocol (VCP) events. Built with React, TypeScript, and TailwindCSS.
 
 ## Features
+
+### SDK Evidence Demo
+
+`/evidence-demo` connects the SDK, Explorer API and GUI using three synthetic
+cases: intact evidence, changed evidence and a missing trusted key. The GUI
+displays per-check results, separate **Local checks** and **Full evidence**
+summaries, trust configuration and unresolved external checks. An intact local
+`VALID` result still has an overall `INDETERMINATE` verdict because the demo
+does not supply independently authenticated external anchor proof.
+
+This page always requests the explicitly configured API, independently of
+legacy mock mode. Unavailable APIs and unsupported or inconsistent responses
+show errors, never synthetic replacement verdicts. Case changes cancel pending
+requests and clear the old result. The browser displays the API's SDK report;
+it does not independently repeat those cryptographic checks. Raw event JSONL
+and AnchorRecord strings are displayed and downloaded without JSON number
+round-tripping, preserving nanosecond integers exactly.
+
+See [the local integration recipe](docs/EVIDENCE_DEMO_INTEGRATION.md) for setup,
+the fixed inputs and the actual verification boundary. This demo does not
+establish VCP/VAP conformance, certification or production readiness.
 
 ### 🔍 Event Search & Exploration
 - Advanced search by Event ID, Trace ID, Symbol, or Event Type
@@ -102,8 +123,13 @@ The application will be available at `http://localhost:5173`
 |----------|-------------|---------|
 | `VITE_API_BASE_URL` | VCP Explorer API endpoint | `https://explorer.veritaschain.org/api/v1` |
 | `VITE_USE_MOCK` | Enable mock data for offline development | `true` |
+| `VITE_EVIDENCE_API_BASE_URL` | API base for Evidence Demo; independent of legacy mock mode | Explicit `VITE_API_BASE_URL`, otherwise unconfigured |
 
-> **Note**: The VCP Explorer API is currently in development. Mock mode (`VITE_USE_MOCK=true`) is recommended for demonstrations and development.
+Evidence Demo uses routes under `/evidence-demo/cases` on that API base. For a
+local API, use `http://127.0.0.1:3001/v1`. Restart the development server or
+rebuild after changing Vite environment variables. With no explicit API base,
+the page displays setup information and performs no verification. The legacy
+dashboard remains an offline demonstration when `VITE_USE_MOCK=true`.
 
 ## Project Structure
 

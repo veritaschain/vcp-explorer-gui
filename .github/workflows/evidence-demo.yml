@@ -1,0 +1,57 @@
+name: SDK API GUI evidence integration
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: gui
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: veritaschain/vcp-sdk
+          ref: eb8df265a09f2415154de2ae2a617bb502c558d2
+          path: sdk
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: veritaschain/vcp-explorer-api
+          ref: 31fe74c36a5d8cac0951de54e30e18197f5b0574
+          path: api
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: gui/.nvmrc
+      - name: Install the three checkouts
+        run: |
+          npm --prefix sdk/typescript ci --no-audit
+          npm --prefix api ci --no-audit
+          npm --prefix gui ci --no-audit
+      - name: Install isolated browser test tools
+        run: |
+          npm install --prefix "$RUNNER_TEMP/vcp-evidence-browser-tools" --ignore-scripts --no-audit --save-exact playwright@1.56.1
+          node "$RUNNER_TEMP/vcp-evidence-browser-tools/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Build and check actual SDK → API → GUI evidence
+        working-directory: gui
+        env:
+          PW_MODULE: ${{ runner.temp }}/vcp-evidence-browser-tools/node_modules/playwright
+        run: node tools/run-evidence-demo.mjs --sdk-dir ../sdk --api-dir ../api --browser-check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: evidence-demo-browser-results
+          path: gui/evidence-demo-test-output/
+          if-no-files-found: warn
+          retention-days: 14
