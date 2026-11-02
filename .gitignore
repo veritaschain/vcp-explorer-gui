@@ -6,3 +6,6 @@ vite.config.d.ts
 *.log
 .env.local
 evidence-demo-test-output/
+dist-api/
+dist-mock/
+hash-chain-report/

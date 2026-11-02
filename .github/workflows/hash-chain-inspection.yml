@@ -1,0 +1,58 @@
+name: Hash Chain inspection regression
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  hash-chain-inspection:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: '.nvmrc'
+      - name: Build both data modes
+        run: |
+          npm ci --no-audit --no-fund
+          VITE_USE_MOCK=false VITE_API_BASE_URL=/api/v1 npm run build -- --outDir dist-api
+          VITE_USE_MOCK=true npm run build -- --outDir dist-mock
+      - name: Install test-only Chromium
+        run: |
+          npm install --prefix .browser-tools --ignore-scripts --no-audit --save-exact playwright@1.56.1
+          node .browser-tools/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Inspect trace selection, failures and scoped results in Chromium
+        env:
+          PW_MODULE: ${{ github.workspace }}/.browser-tools/node_modules/playwright
+          HASH_CHAIN_GUI_URL: http://127.0.0.1:4173/chain
+          HASH_CHAIN_MOCK_GUI_URL: http://127.0.0.1:4174/chain
+          HASH_CHAIN_TEST_OUTPUT: hash-chain-report
+        run: |
+          set -euo pipefail
+          mkdir -p hash-chain-report
+          git rev-parse HEAD > hash-chain-report/source-commit.txt
+          node -e "require('node:fs').writeFileSync('hash-chain-report/runtime.json', JSON.stringify({node:process.version,openssl:process.versions.openssl}, null, 2))"
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort --outDir dist-api > hash-chain-report/api-preview.log 2>&1 &
+          preview_api_pid=$!
+          npm run preview -- --host 127.0.0.1 --port 4174 --strictPort --outDir dist-mock > hash-chain-report/mock-preview.log 2>&1 &
+          preview_mock_pid=$!
+          trap 'kill "$preview_api_pid" "$preview_mock_pid" 2>/dev/null || true' EXIT
+          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 --max-time 3 --retry-max-time 30 --output /dev/null http://127.0.0.1:4173/chain
+          curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 --max-time 3 --retry-max-time 30 --output /dev/null http://127.0.0.1:4174/chain
+          timeout 180 node tools/tests/check-hash-chain.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: hash-chain-inspection-evidence
+          path: hash-chain-report/
+          if-no-files-found: error
+          retention-days: 14

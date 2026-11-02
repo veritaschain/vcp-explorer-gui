@@ -14,16 +14,6 @@ import type {
 } from '@/types/vcp';
 import { DEMO_MERKLE_FIXTURE } from './merkle-fixture.ts';
 
-// Generate realistic SHA-256 hash
-function generateHash(): string {
-  const chars = '0123456789abcdef';
-  let hash = '';
-  for (let i = 0; i < 64; i++) {
-    hash += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return hash;
-}
-
 // Generate nanosecond timestamp string
 function generateNsTimestamp(date: Date = new Date()): string {
   return (BigInt(date.getTime()) * BigInt(1_000_000)).toString();
@@ -35,7 +25,7 @@ const TRACE_IDS = [
   '01934e3b-5b2b-7000-9000-bbbbbbbbbbbb',
   '01934e3c-4c3c-7000-a000-cccccccccccc',
   '01934e3d-3d4d-7000-b000-dddddddddddd',
-  '01934e3e-2e5e-7000-c000-eeeeeeeeeeee',
+  '01934e3e-2e5e-7000-8000-eeeeeeeeeeee',
 ];
 
 // Sample events
@@ -173,6 +163,13 @@ const MOCK_EVENTS: EventListItem[] = [
 // records, or externally anchored evidence.
 const MOCK_HASHES = ['0'.repeat(64), ...DEMO_MERKLE_FIXTURE.event_hashes];
 
+// Explicit fixture membership: XAUUSD lifecycle, EURUSD lifecycle, risk,
+// BTCUSDT lifecycle, then the two system events. This is not index / 4.
+const TRACE_MEMBERSHIP = [0, 0, 0, 0, 1, 1, 1, 2, 3, 3, 4, 4];
+const EVENT_TRACES = new Map(MOCK_EVENTS.map((event, index) =>
+  [event.event_id, TRACE_IDS[TRACE_MEMBERSHIP[index]]] as const
+));
+
 // Get mock events with filtering
 export function getMockEvents(params: EventSearchParams = {}): EventSearchResponse {
   let filtered = MOCK_EVENTS.map((event, index) => ({
@@ -188,9 +185,8 @@ export function getMockEvents(params: EventSearchParams = {}): EventSearchRespon
     filtered = filtered.filter((e) => e.type === params.event_type);
   }
 
-  if (params.trace_id) {
-    // For demo, show first 4 events as a trace
-    filtered = filtered.slice(0, 4);
+  if (params.trace_id !== undefined) {
+    filtered = filtered.filter((event) => EVENT_TRACES.get(event.event_id) === params.trace_id);
   }
 
   if (params.start_time) {
@@ -217,9 +213,10 @@ export function getMockEvents(params: EventSearchParams = {}): EventSearchRespon
 // Get mock event detail
 export function getMockEventDetail(eventId: string): EventDetailResponse {
   const index = MOCK_EVENTS.findIndex((e) => e.event_id === eventId);
-  const event = MOCK_EVENTS[index] || MOCK_EVENTS[0];
-  const eventHash = MOCK_HASHES[index + 1] || generateHash();
-  const prevHash = MOCK_HASHES[index] || MOCK_HASHES[0];
+  if (index < 0) throw new Error('Demo event is not available for this event ID');
+  const event = MOCK_EVENTS[index];
+  const eventHash = MOCK_HASHES[index + 1];
+  const prevHash = MOCK_HASHES[index];
 
   const baseTimestamp = new Date(event.timestamp);
   const nsTimestamp = generateNsTimestamp(baseTimestamp);
@@ -227,190 +224,12 @@ export function getMockEventDetail(eventId: string): EventDetailResponse {
   return {
     header: {
       event_id: event.event_id,
-      trace_id: TRACE_IDS[Math.floor(index / 4)] || TRACE_IDS[0],
+      trace_id: TRACE_IDS[TRACE_MEMBERSHIP[index]],
       timestamp_int: nsTimestamp,
       timestamp_iso: event.timestamp,
       event_type: event.type as EventType,
       event_type_code: event.event_type_code,
-      timestamp_precision: 'MILLISECOND',
-      clock_sync_status: 'NTP_SYNCED',
-      hash_algo: 'SHA256',
-      venue_id: event.venue,
-      symbol: event.symbol,
-      account_id: 'acc_7f83b162a9c4e521',
-      anchor_status: event.status,
-    },
-    payload: {
-      trade_data:
-        event.type === 'ORD' || event.type === 'EXE' || event.type === 'ACK'
-          ? {
-              order_id: '12345678',
-              broker_order_id: 'BRK-2025112500001234',
-              side: 'BUY',
-              order_type: 'MARKET',
-              price: event.symbol === 'XAUUSD' ? '2650.50' : event.symbol === 'BTCUSDT' ? '97500.00' : '1.0845',
-              quantity: event.symbol === 'BTCUSDT' ? '0.15' : '1.00',
-              execution_price: event.type === 'EXE' ? (event.symbol === 'XAUUSD' ? '2650.55' : '1.0846') : undefined,
-              executed_qty: event.type === 'EXE' ? '1.00' : undefined,
-              commission: event.type === 'EXE' ? '7.50' : undefined,
-              slippage: event.type === 'EXE' ? '0.05' : undefined,
-            }
-          : event.type === 'REJ'
-            ? {
-                order_id: '33445566',
-                reject_reason: 'INSUFFICIENT_MARGIN',
-              }
-            : undefined,
-      vcp_risk:
-        event.type === 'RSK' || event.type === 'SIG'
-          ? {
-              snapshot: {
-                total_equity: '125000.00',
-                margin_level_pct: '180.00',
-                unrealized_pnl: '2500.00',
-                max_drawdown_pct: '8.5',
-                news_trading_restricted: 'false',
-                max_drawdown_limit: '10000.00',
-                max_position_size: '50.00',
-                exposure_utilization: '0.45',
-                throttle_rate: '100',
-                circuit_breaker_status: 'NORMAL',
-              },
-              triggered_controls:
-                event.type === 'RSK'
-                  ? [
-                      {
-                        control_name: 'MAX_DRAWDOWN_WARNING',
-                        trigger_value: '8.5',
-                        action: 'ALERT',
-                        timestamp_int: nsTimestamp,
-                      },
-                    ]
-                  : [],
-            }
-          : undefined,
-      vcp_gov:
-        event.type === 'SIG' || event.type === 'ALG'
-          ? {
-              algo_id: 'gold-momentum-v2.3',
-              algo_version: '2.3.1',
-              algo_type: 'HYBRID',
-              model_hash: 'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
-              risk_classification: 'MEDIUM',
-              last_approval_by: 'risk-committee@example.com',
-              approval_timestamp_int: '1732449600000000000',
-              decision_factors: {
-                features: [
-                  { name: 'rsi_14', value: '28.5', weight: '0.35', contribution: '0.12' },
-                  { name: 'macd_signal', value: '1.25', weight: '0.25', contribution: '0.08' },
-                  { name: 'bollinger_position', value: '0.15', weight: '0.20', contribution: '0.06' },
-                  { name: 'volume_ratio', value: '1.45', weight: '0.20', contribution: '0.05' },
-                ],
-                confidence_score: '0.87',
-                explainability_method: 'SHAP',
-              },
-            }
-          : undefined,
-    },
-    security: {
-      event_hash: eventHash,
-      prev_hash: prevHash,
-      signature: 'MEUCIQDXyz123abc456def789ghi012jkl345mno678pqr901stu234vwx567yza890==',
-      sign_algo: 'ED25519',
-      merkle_root: DEMO_MERKLE_FIXTURE.root_hash,
-      anchor:
-        event.status === 'ANCHORED'
-          ? {
-              network: 'ethereum-mainnet',
-              tx_hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd',
-              block_number: 1942055 + index,
-              anchored_at: new Date(baseTimestamp.getTime() + 300000).toISOString(),
-            }
-          : undefined,
-    },
-  };
-}
-
-// Get mock Merkle proof
-export function getMockProof(eventId: string): MerkleProofResponse {
-  const index = MOCK_EVENTS.findIndex((e) => e.event_id === eventId);
-  if (index < 0) throw new Error('Demo proof is not available for this event');
-  const auditPath = [...DEMO_MERKLE_FIXTURE.audit_paths[index]];
-
-  return {
-    event_id: eventId,
-    event_hash: MOCK_HASHES[index + 1],
-    merkle_proof: {
-      root_hash: DEMO_MERKLE_FIXTURE.root_hash,
-      leaf_index: index,
-      tree_size: DEMO_MERKLE_FIXTURE.tree_size,
-      audit_path: auditPath,
-    },
-    verification_steps: [
-      'Compute leaf hash: SHA256(0x00 || event_hash)',
-      ...auditPath.map((_, i) => `Combine sibling[${i}] using leaf index and tree size`),
-      'Compare computed root with supplied demo root (not authenticated)',
-    ],
-  };
-}
-
-// Get mock certificate
-export function getMockCertificate(eventId: string): CertificateResponse {
-  const detail = getMockEventDetail(eventId);
-  const proof = getMockProof(eventId);
-
-  return {
-    event_id: eventId,
-    generated_at: new Date().toISOString(),
-    system: {
-      vcp_version: '1.0',
-      tier: 'GOLD',
-    },
-    header: detail.header,
-    payload: detail.payload,
-    security: {
-      event_hash: detail.security.event_hash,
-      prev_hash: detail.security.prev_hash,
-      signature: detail.security.signature,
-      sign_algo: detail.security.sign_algo,
-      merkle_root: detail.security.merkle_root,
-    },
-    merkle_proof: proof.merkle_proof,
-    anchor_info: detail.security.anchor || {
-      network: 'ethereum-mainnet',
-      tx_hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd',
-      block_number: 1942055,
-      anchored_at: new Date().toISOString(),
-    },
-  };
-}
-
-// Get mock system status
-export function getMockSystemStatus(): SystemStatusResponse {
-  return {
-    total_events: 12160243,
-    last_anchor: {
-      network: 'ethereum-mainnet',
-      block_number: 1942055,
-      tx_hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd',
-      anchored_at: new Date(Date.now() - 300000).toISOString(),
-    },
-    active_nodes: 42,
-    precision: 'NANOSECOND',
-    tier: 'PLATINUM',
-  };
-}
-
-// Get mock certified entities
-export function getMockCertifiedEntities(): CertifiedEntitiesResponse {
-  return {
-    entities: [
-      {
-        name: 'Alpha Quant Exchange',
-        type: 'EXCHANGE',
-        tier: 'PLATINUM',
-        status: 'COMPLIANT',
-        verification_url: 'https://explorer.veritaschain.org/entities/alpha-quant',
+      timestamp_precision:…1639 tokens truncated…n_url: 'https://explorer.veritaschain.org/entities/alpha-quant',
         audit_report: '2025-Q3',
       },
       {

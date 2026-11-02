@@ -75,9 +75,17 @@ sizes, path-length errors and indices above the 32-bit range.
 - Blockchain anchor display (demo data; not verified on-chain)
 
 ### 🔗 Event Chain Visualization
-- Transaction lifecycle tracking (SIG → ORD → ACK → EXE)
-- Hash chain integrity verification
-- Visual broken chain detection
+
+- Transaction lifecycle view grouped by Trace ID
+- Comparison of supplied hash-link values between adjacent returned records
+- Separate results for matching links, mismatches, insufficient data and invalid data
+
+The Hash Chain page compares supplied `prev_hash` and `event_hash` values only.
+It does not recompute payload hashes, verify signatures or external anchors, or
+establish that the returned records form a complete history. Mock records are
+synthetic demonstrations, not production evidence. See [Hash Chain inspection
+scope](docs/HASH_CHAIN_INSPECTION.md) for the result meanings and limits. The
+SDK Evidence Demo above remains a separate verification path.
 
 ## Tech Stack
 
@@ -270,9 +278,10 @@ See [API_REFERENCE.md](https://github.com/veritaschain/vcp-explorer-api/blob/mai
 - Step-by-step computation display
 
 ### Event Chain Visualizer
+
 - Transaction lifecycle view
-- Hash chain integrity status
-- Broken chain detection
+- Link comparison status for the returned records
+- Mismatches and unavailable inspection results
 
 ## Contributing
 
