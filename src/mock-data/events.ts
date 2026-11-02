@@ -229,7 +229,185 @@ export function getMockEventDetail(eventId: string): EventDetailResponse {
       timestamp_iso: event.timestamp,
       event_type: event.type as EventType,
       event_type_code: event.event_type_code,
-      timestamp_precision:…1639 tokens truncated…n_url: 'https://explorer.veritaschain.org/entities/alpha-quant',
+      timestamp_precision: 'MILLISECOND',
+      clock_sync_status: 'NTP_SYNCED',
+      hash_algo: 'SHA256',
+      venue_id: event.venue,
+      symbol: event.symbol,
+      account_id: 'acc_7f83b162a9c4e521',
+      anchor_status: event.status,
+    },
+    payload: {
+      trade_data:
+        event.type === 'ORD' || event.type === 'EXE' || event.type === 'ACK'
+          ? {
+              order_id: '12345678',
+              broker_order_id: 'BRK-2025112500001234',
+              side: 'BUY',
+              order_type: 'MARKET',
+              price: event.symbol === 'XAUUSD' ? '2650.50' : event.symbol === 'BTCUSDT' ? '97500.00' : '1.0845',
+              quantity: event.symbol === 'BTCUSDT' ? '0.15' : '1.00',
+              execution_price: event.type === 'EXE' ? (event.symbol === 'XAUUSD' ? '2650.55' : '1.0846') : undefined,
+              executed_qty: event.type === 'EXE' ? '1.00' : undefined,
+              commission: event.type === 'EXE' ? '7.50' : undefined,
+              slippage: event.type === 'EXE' ? '0.05' : undefined,
+            }
+          : event.type === 'REJ'
+            ? {
+                order_id: '33445566',
+                reject_reason: 'INSUFFICIENT_MARGIN',
+              }
+            : undefined,
+      vcp_risk:
+        event.type === 'RSK' || event.type === 'SIG'
+          ? {
+              snapshot: {
+                total_equity: '125000.00',
+                margin_level_pct: '180.00',
+                unrealized_pnl: '2500.00',
+                max_drawdown_pct: '8.5',
+                news_trading_restricted: 'false',
+                max_drawdown_limit: '10000.00',
+                max_position_size: '50.00',
+                exposure_utilization: '0.45',
+                throttle_rate: '100',
+                circuit_breaker_status: 'NORMAL',
+              },
+              triggered_controls:
+                event.type === 'RSK'
+                  ? [
+                      {
+                        control_name: 'MAX_DRAWDOWN_WARNING',
+                        trigger_value: '8.5',
+                        action: 'ALERT',
+                        timestamp_int: nsTimestamp,
+                      },
+                    ]
+                  : [],
+            }
+          : undefined,
+      vcp_gov:
+        event.type === 'SIG' || event.type === 'ALG'
+          ? {
+              algo_id: 'gold-momentum-v2.3',
+              algo_version: '2.3.1',
+              algo_type: 'HYBRID',
+              model_hash: 'sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+              risk_classification: 'MEDIUM',
+              last_approval_by: 'risk-committee@example.com',
+              approval_timestamp_int: '1732449600000000000',
+              decision_factors: {
+                features: [
+                  { name: 'rsi_14', value: '28.5', weight: '0.35', contribution: '0.12' },
+                  { name: 'macd_signal', value: '1.25', weight: '0.25', contribution: '0.08' },
+                  { name: 'bollinger_position', value: '0.15', weight: '0.20', contribution: '0.06' },
+                  { name: 'volume_ratio', value: '1.45', weight: '0.20', contribution: '0.05' },
+                ],
+                confidence_score: '0.87',
+                explainability_method: 'SHAP',
+              },
+            }
+          : undefined,
+    },
+    security: {
+      event_hash: eventHash,
+      prev_hash: prevHash,
+      signature: 'MEUCIQDXyz123abc456def789ghi012jkl345mno678pqr901stu234vwx567yza890==',
+      sign_algo: 'ED25519',
+      merkle_root: DEMO_MERKLE_FIXTURE.root_hash,
+      anchor:
+        event.status === 'ANCHORED'
+          ? {
+              network: 'ethereum-mainnet',
+              tx_hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd',
+              block_number: 1942055 + index,
+              anchored_at: new Date(baseTimestamp.getTime() + 300000).toISOString(),
+            }
+          : undefined,
+    },
+  };
+}
+
+// Get mock Merkle proof
+export function getMockProof(eventId: string): MerkleProofResponse {
+  const index = MOCK_EVENTS.findIndex((e) => e.event_id === eventId);
+  if (index < 0) throw new Error('Demo proof is not available for this event');
+  const auditPath = [...DEMO_MERKLE_FIXTURE.audit_paths[index]];
+
+  return {
+    event_id: eventId,
+    event_hash: MOCK_HASHES[index + 1],
+    merkle_proof: {
+      root_hash: DEMO_MERKLE_FIXTURE.root_hash,
+      leaf_index: index,
+      tree_size: DEMO_MERKLE_FIXTURE.tree_size,
+      audit_path: auditPath,
+    },
+    verification_steps: [
+      'Compute leaf hash: SHA256(0x00 || event_hash)',
+      ...auditPath.map((_, i) => `Combine sibling[${i}] using leaf index and tree size`),
+      'Compare computed root with supplied demo root (not authenticated)',
+    ],
+  };
+}
+
+// Get mock certificate
+export function getMockCertificate(eventId: string): CertificateResponse {
+  const detail = getMockEventDetail(eventId);
+  const proof = getMockProof(eventId);
+
+  return {
+    event_id: eventId,
+    generated_at: new Date().toISOString(),
+    system: {
+      vcp_version: '1.0',
+      tier: 'GOLD',
+    },
+    header: detail.header,
+    payload: detail.payload,
+    security: {
+      event_hash: detail.security.event_hash,
+      prev_hash: detail.security.prev_hash,
+      signature: detail.security.signature,
+      sign_algo: detail.security.sign_algo,
+      merkle_root: detail.security.merkle_root,
+    },
+    merkle_proof: proof.merkle_proof,
+    anchor_info: detail.security.anchor || {
+      network: 'ethereum-mainnet',
+      tx_hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd',
+      block_number: 1942055,
+      anchored_at: new Date().toISOString(),
+    },
+  };
+}
+
+// Get mock system status
+export function getMockSystemStatus(): SystemStatusResponse {
+  return {
+    total_events: 12160243,
+    last_anchor: {
+      network: 'ethereum-mainnet',
+      block_number: 1942055,
+      tx_hash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcd',
+      anchored_at: new Date(Date.now() - 300000).toISOString(),
+    },
+    active_nodes: 42,
+    precision: 'NANOSECOND',
+    tier: 'PLATINUM',
+  };
+}
+
+// Get mock certified entities
+export function getMockCertifiedEntities(): CertifiedEntitiesResponse {
+  return {
+    entities: [
+      {
+        name: 'Alpha Quant Exchange',
+        type: 'EXCHANGE',
+        tier: 'PLATINUM',
+        status: 'COMPLIANT',
+        verification_url: 'https://explorer.veritaschain.org/entities/alpha-quant',
         audit_report: '2025-Q3',
       },
       {
