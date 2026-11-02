@@ -260,18 +260,3 @@ export function formatNanosecondTimestamp(nsString: string): string {
   const ms = ns / BigInt(1_000_000);
   return new Date(Number(ms)).toISOString();
 }
-
-/**
- * Calculate hash chain integrity
- */
-export function verifyHashChain(events: { event_hash: string; prev_hash: string }[]): {
-  isValid: boolean;
-  brokenAt?: number;
-} {
-  for (let i = 1; i < events.length; i++) {
-    if (events[i].prev_hash !== events[i - 1].event_hash) {
-      return { isValid: false, brokenAt: i };
-    }
-  }
-  return { isValid: true };
-}

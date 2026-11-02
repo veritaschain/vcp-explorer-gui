@@ -14,16 +14,6 @@ import type {
 } from '@/types/vcp';
 import { DEMO_MERKLE_FIXTURE } from './merkle-fixture.ts';
 
-// Generate realistic SHA-256 hash
-function generateHash(): string {
-  const chars = '0123456789abcdef';
-  let hash = '';
-  for (let i = 0; i < 64; i++) {
-    hash += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return hash;
-}
-
 // Generate nanosecond timestamp string
 function generateNsTimestamp(date: Date = new Date()): string {
   return (BigInt(date.getTime()) * BigInt(1_000_000)).toString();
@@ -35,7 +25,7 @@ const TRACE_IDS = [
   '01934e3b-5b2b-7000-9000-bbbbbbbbbbbb',
   '01934e3c-4c3c-7000-a000-cccccccccccc',
   '01934e3d-3d4d-7000-b000-dddddddddddd',
-  '01934e3e-2e5e-7000-c000-eeeeeeeeeeee',
+  '01934e3e-2e5e-7000-8000-eeeeeeeeeeee',
 ];
 
 // Sample events
@@ -173,6 +163,13 @@ const MOCK_EVENTS: EventListItem[] = [
 // records, or externally anchored evidence.
 const MOCK_HASHES = ['0'.repeat(64), ...DEMO_MERKLE_FIXTURE.event_hashes];
 
+// Explicit fixture membership: XAUUSD lifecycle, EURUSD lifecycle, risk,
+// BTCUSDT lifecycle, then the two system events. This is not index / 4.
+const TRACE_MEMBERSHIP = [0, 0, 0, 0, 1, 1, 1, 2, 3, 3, 4, 4];
+const EVENT_TRACES = new Map(MOCK_EVENTS.map((event, index) =>
+  [event.event_id, TRACE_IDS[TRACE_MEMBERSHIP[index]]] as const
+));
+
 // Get mock events with filtering
 export function getMockEvents(params: EventSearchParams = {}): EventSearchResponse {
   let filtered = MOCK_EVENTS.map((event, index) => ({
@@ -188,9 +185,8 @@ export function getMockEvents(params: EventSearchParams = {}): EventSearchRespon
     filtered = filtered.filter((e) => e.type === params.event_type);
   }
 
-  if (params.trace_id) {
-    // For demo, show first 4 events as a trace
-    filtered = filtered.slice(0, 4);
+  if (params.trace_id !== undefined) {
+    filtered = filtered.filter((event) => EVENT_TRACES.get(event.event_id) === params.trace_id);
   }
 
   if (params.start_time) {
@@ -217,9 +213,10 @@ export function getMockEvents(params: EventSearchParams = {}): EventSearchRespon
 // Get mock event detail
 export function getMockEventDetail(eventId: string): EventDetailResponse {
   const index = MOCK_EVENTS.findIndex((e) => e.event_id === eventId);
-  const event = MOCK_EVENTS[index] || MOCK_EVENTS[0];
-  const eventHash = MOCK_HASHES[index + 1] || generateHash();
-  const prevHash = MOCK_HASHES[index] || MOCK_HASHES[0];
+  if (index < 0) throw new Error('Demo event is not available for this event ID');
+  const event = MOCK_EVENTS[index];
+  const eventHash = MOCK_HASHES[index + 1];
+  const prevHash = MOCK_HASHES[index];
 
   const baseTimestamp = new Date(event.timestamp);
   const nsTimestamp = generateNsTimestamp(baseTimestamp);
@@ -227,7 +224,7 @@ export function getMockEventDetail(eventId: string): EventDetailResponse {
   return {
     header: {
       event_id: event.event_id,
-      trace_id: TRACE_IDS[Math.floor(index / 4)] || TRACE_IDS[0],
+      trace_id: TRACE_IDS[TRACE_MEMBERSHIP[index]],
       timestamp_int: nsTimestamp,
       timestamp_iso: event.timestamp,
       event_type: event.type as EventType,

@@ -95,19 +95,21 @@ class VCPExplorerClient {
   // Event Endpoints
   // ============================================================
 
-  async searchEvents(params: EventSearchParams = {}): Promise<EventSearchResponse> {
+  async searchEvents(params: EventSearchParams = {}, signal?: AbortSignal): Promise<EventSearchResponse> {
+    signal?.throwIfAborted();
     if (this.useMock) {
       return getMockEvents(params);
     }
-    const response = await this.client.get<EventSearchResponse>('/events', { params });
+    const response = await this.client.get<EventSearchResponse>('/events', { params, signal });
     return response.data;
   }
 
-  async getEventById(eventId: string): Promise<EventDetailResponse> {
+  async getEventById(eventId: string, signal?: AbortSignal): Promise<EventDetailResponse> {
+    signal?.throwIfAborted();
     if (this.useMock) {
       return getMockEventDetail(eventId);
     }
-    const response = await this.client.get<EventDetailResponse>(`/events/${eventId}`);
+    const response = await this.client.get<EventDetailResponse>(`/events/${encodeURIComponent(eventId)}`, { signal });
     return response.data;
   }
 
