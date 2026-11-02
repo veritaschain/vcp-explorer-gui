@@ -1,0 +1,9 @@
+.git
+node_modules
+dist
+dist-api
+dist-mock
+evidence-demo-test-output
+hash-chain-report
+*.log
+*.tsbuildinfo

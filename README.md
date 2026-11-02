@@ -206,6 +206,15 @@ backend; an unreachable placeholder upstream must not prevent the UI starting.
 The application currently uses mock data by default. This container check does
 not establish connectivity to a deployed API.
 
+The runtime is an official, digest-pinned NGINX Unprivileged image, running as
+UID/GID `101:101` on container port `8080`. NGINX sends a Content Security Policy
+on HTML, assets and error responses. It permits the Google Fonts used by this
+UI, inline styles used by React/Framer Motion, the default Explorer HTTPS API,
+and the documented local API on port `3001`. Scripts must come from the same
+origin. When configuring another API host, explicitly add its origin to
+`connect-src` in `nginx.conf` and configure the API's CORS policy before rebuilding.
+See [container security and pin provenance](docs/CONTAINER_SECURITY.md).
+
 ### Build and run with Docker
 
 ```bash
@@ -213,7 +222,10 @@ not establish connectivity to a deployed API.
 docker build -t vcp-explorer-gui .
 
 # Run the container
-docker run -p 3000:80 vcp-explorer-gui
+docker run -p 3000:8080 vcp-explorer-gui
+
+# Check non-root execution, health, routing and security headers
+bash tools/smoke-container.sh vcp-explorer-gui
 ```
 
 ### Using Docker Compose
@@ -306,6 +318,7 @@ Apache 2.0 - See [LICENSE](LICENSE) for details.
 
 ## Support
 
+- **Security reports**: see [SECURITY.md](SECURITY.md) for private reporting.
 - **Website**: https://veritaschain.org
 - **GitHub Issues**: https://github.com/veritaschain/vcp-explorer-gui/issues
 - **Email**: standards@veritaschain.org
