@@ -311,10 +311,7 @@ Apache 2.0 - See [LICENSE](LICENSE) for details.
 
 - [VCP Specification](https://github.com/veritaschain/vcp-spec) - Protocol specification (current release: v1.2)
 - [VCP Explorer API](https://github.com/veritaschain/vcp-explorer-api) - Backend API server
-- [VCP SDK (TypeScript)](https://github.com/veritaschain/vcp-sdk-typescript) - TypeScript SDK
-- [VCP SDK (Python)](https://github.com/veritaschain/vcp-sdk-python) - Python SDK
-
-> **Note**: Some repositories may be in private development. Contact VSO for early access.
+- [VCP SDK source (Python / TypeScript / MQL5)](https://github.com/veritaschain/vcp-sdk) - First-party offline VCP v1.2 core; see its README for installation and verification limits.
 
 ## Support
 
