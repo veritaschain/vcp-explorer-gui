@@ -58,6 +58,8 @@ let context;
   // potentially abbreviated display text; otherwise truncation could self-validate.
   await page.goto(origin + eventPath);
   await page.getByRole('heading', { name: 'Event Details', exact: true }).waitFor();
+  results.push({ kind: 'no-demo-event-transaction-explorer-link',
+    ok: await page.locator('a[href*="etherscan.io/tx/"]').count() === 0 });
   const traceLink = page.locator('a[href^="/chain/"]').first();
   await traceLink.waitFor();
   const tracePath = await traceLink.getAttribute('href');

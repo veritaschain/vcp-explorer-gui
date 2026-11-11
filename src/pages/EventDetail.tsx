@@ -412,10 +412,10 @@ export function EventDetail() {
 
             {/* Anchor Info */}
             {event.security.anchor && (
-              <div className="mt-4 p-4 bg-verify-500/10 border border-verify-500/20 rounded-lg">
+              <div className="mt-4 p-4 bg-anomaly-500/10 border border-anomaly-500/20 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 className="w-4 h-4 text-verify-400" />
-                  <span className="text-sm font-medium text-verify-400">Anchor record (demo data — not verified)</span>
+                  <AlertTriangle className="w-4 h-4 text-anomaly-400" />
+                  <span className="text-sm font-medium text-anomaly-300">Anchor record (demo data — not verified)</span>
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -428,15 +428,9 @@ export function EventDetail() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-vcp-400">TX Hash</span>
-                    <a
-                      href={`https://etherscan.io/tx/${event.security.anchor.tx_hash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-vcp-300 hover:text-white flex items-center gap-1"
-                    >
+                    <span className="text-vcp-300 font-mono">
                       {truncateHash(event.security.anchor.tx_hash, 8)}
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
+                    </span>
                   </div>
                 </div>
               </div>
