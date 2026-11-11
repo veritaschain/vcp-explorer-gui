@@ -28,7 +28,7 @@ def content_checks(page_texts, expected):
     compact_pages = [re.sub(r"\s+", "", text).lower() for text in page_texts]
     combined = " ".join(normal_pages)
     proof_pages = [index + 1 for index, (plain, compact) in enumerate(zip(normal_pages, compact_pages))
-                   if "merkle inclusion proof (rfc 6962)" in plain
+                   if "merkle proof data — not verified" in plain
                    and all(h.lower() in compact for h in hashes)]
     checks = {
         "certificate_heading": "vcp event certificate" in combined,

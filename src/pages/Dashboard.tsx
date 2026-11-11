@@ -10,7 +10,6 @@ import {
   Clock,
   TrendingUp,
   AlertCircle,
-  CheckCircle2,
 } from 'lucide-react';
 import { vcpClient } from '@/lib/api-client';
 import { formatDate, formatNumber } from '@/lib/utils';
@@ -124,23 +123,23 @@ export function Dashboard() {
         />
         <StatCard
           icon={Activity}
-          label="Active Nodes"
+          label="Reported Nodes"
           value={systemStatus?.active_nodes?.toString() || '---'}
-          subtext="Distributed Network"
+          subtext="Demo system metadata"
           color="green"
         />
         <StatCard
           icon={Shield}
-          label="Certification Tier"
+          label="Reported Tier"
           value={systemStatus?.tier || '---'}
-          subtext="System Level"
+          subtext="Not a certification"
           color="purple"
         />
         <StatCard
           icon={Clock}
-          label="Precision"
+          label="Reported Precision"
           value={systemStatus?.precision || '---'}
-          subtext="Timestamp Accuracy"
+          subtext="Clock accuracy not verified"
           color="amber"
         />
       </div>
@@ -205,19 +204,19 @@ export function Dashboard() {
         {/* Last Anchor */}
         <div className="glass-card p-6">
           <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-4">
-            <Shield className="w-5 h-5 text-verify-400" />
-            Last Anchor
+            <Shield className="w-5 h-5 text-vcp-400" />
+            Reported Anchor
           </h2>
 
           {systemStatus?.last_anchor ? (
             <div className="space-y-4">
-              <div className="p-4 bg-verify-500/10 border border-verify-500/20 rounded-lg">
+              <div className="p-4 bg-anomaly-500/10 border border-anomaly-500/20 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 className="w-4 h-4 text-verify-400" />
-                  <span className="text-sm font-medium text-verify-400">Anchored</span>
+                  <AlertCircle className="w-4 h-4 text-anomaly-400" />
+                  <span className="text-sm font-medium text-anomaly-300">Anchor not verified</span>
                 </div>
                 <p className="text-xs text-vcp-400">
-                  Successfully anchored to {systemStatus.last_anchor.network}
+                  Supplied metadata names {systemStatus.last_anchor.network}. This view does not check the transaction or anchor on-chain.
                 </p>
               </div>
 
@@ -241,7 +240,7 @@ export function Dashboard() {
                   </p>
                 </div>
                 <div>
-                  <span className="text-xs text-vcp-500 uppercase tracking-wider">Anchored At</span>
+                  <span className="text-xs text-vcp-500 uppercase tracking-wider">Reported Anchor Time</span>
                   <p className="text-sm text-white mt-1">
                     {formatDate(systemStatus.last_anchor.anchored_at)}
                   </p>

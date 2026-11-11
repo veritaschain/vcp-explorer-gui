@@ -50,7 +50,7 @@ const verification = [
 
 const resources = [
   {
-    name: 'Certified Entities',
+    name: 'Demo Entities',
     href: '/entities',
     icon: Building2,
   },
@@ -131,7 +131,7 @@ export function Sidebar() {
         {/* Quick Stats */}
         {!isEvidenceDemo && <div className="mt-8 mx-3 p-4 bg-vcp-800/30 rounded-lg border border-vcp-700/30">
           <h4 className="text-xs font-semibold text-vcp-400 uppercase tracking-wider mb-3">
-            Network Stats
+            Demo Network Stats
           </h4>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
@@ -143,8 +143,8 @@ export function Sidebar() {
               <span className="text-sm font-mono text-white">42</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs text-vcp-500">Last Anchor</span>
-              <span className="text-sm font-mono text-verify-400">5m ago</span>
+              <span className="text-xs text-vcp-500">Anchor Time (sample)</span>
+              <span className="text-sm font-mono text-vcp-300">5m ago</span>
             </div>
           </div>
         </div>}

@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   Shield,
   CheckCircle2,
-  ExternalLink,
   Copy,
   Printer,
 } from 'lucide-react';
@@ -109,12 +108,12 @@ export function CertificatePage() {
             VCP Event Certificate
           </h2>
           <p className="text-vcp-400 print:text-gray-600">
-            VeritasChain Protocol v{certificate.system.vcp_version} • {certificate.system.tier} Tier
+            VeritasChain Protocol v{certificate.system.vcp_version} • Reported tier: {certificate.system.tier} (not certified)
           </p>
         </div>
 
         {/* Verification Status */}
-        <div className="flex items-center justify-center gap-3 mb-8 p-4 bg-verify-500/10 border border-verify-500/20 rounded-lg print:bg-green-50 print:border-green-200">
+        <div className="flex items-center justify-center gap-3 mb-8 p-4 bg-anomaly-500/10 border border-anomaly-500/20 rounded-lg print:bg-amber-50 print:border-amber-200">
           <AlertTriangle className="h-6 w-6 text-anomaly-400 print:text-black" aria-hidden="true" />
           <span className="font-semibold text-anomaly-300 print:text-black">
             Demo data — not verified
@@ -231,7 +230,7 @@ export function CertificatePage() {
         {/* Merkle Proof */}
         <div className="certificate-print-group mb-8" data-certificate-section="merkle-proof">
           <h3 className="text-sm font-semibold text-vcp-500 print:text-gray-500 uppercase tracking-wider mb-3">
-            Merkle Inclusion Proof (RFC 6962)
+            Merkle Proof Data — Not Verified
           </h3>
           <div className="bg-vcp-900/50 print:bg-gray-100 rounded-lg p-4">
             <div className="flex flex-wrap items-center gap-4 mb-3">
@@ -270,9 +269,9 @@ export function CertificatePage() {
         {/* Blockchain Anchor */}
         <div className="certificate-print-group mb-8">
           <h3 className="text-sm font-semibold text-vcp-500 print:text-gray-500 uppercase tracking-wider mb-3">
-            Blockchain Anchor
+            Anchor Metadata — Not Verified On-Chain
           </h3>
-          <div className="bg-verify-500/10 print:bg-green-50 border border-verify-500/20 print:border-green-200 rounded-lg p-4">
+          <div className="bg-anomaly-500/10 print:bg-amber-50 border border-anomaly-500/20 print:border-amber-200 rounded-lg p-4">
             <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
               <CertField label="Network" value={certificate.anchor_info.network} />
               <CertField
@@ -285,19 +284,10 @@ export function CertificatePage() {
                   <code className="min-w-0 flex-1 break-all font-mono text-xs text-vcp-300 print:text-black">
                     {certificate.anchor_info.tx_hash}
                   </code>
-                  <a
-                    href={`https://etherscan.io/tx/${certificate.anchor_info.tx_hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="View demo transaction on Etherscan (opens in a new tab)"
-                    className="p-1 text-vcp-400 hover:text-white print:hidden"
-                  >
-                    <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                  </a>
                 </div>
               </div>
               <CertField
-                label="Anchored At"
+                label="Reported Anchor Time"
                 value={formatDatePrecise(certificate.anchor_info.anchored_at)}
               />
             </div>
@@ -320,7 +310,7 @@ export function CertificatePage() {
 
       {/* Use Cases */}
       <div className="glass-card p-6 print:hidden">
-        <h3 className="text-lg font-semibold text-white mb-4">Certificate Use Cases</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">Illustrative Review Workflows</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <UseCaseCard
             title="Regulatory Submission"
@@ -328,15 +318,15 @@ export function CertificatePage() {
           />
           <UseCaseCard
             title="Dispute Resolution"
-            description="Cryptographic evidence for trade disputes"
+            description="Example record layout for reviewing a trade dispute"
           />
           <UseCaseCard
             title="Audit Trail"
-            description="Complete documentation for internal/external audits"
+            description="Example fields for internal or external audit review"
           />
           <UseCaseCard
             title="Trader Verification"
-            description="Proof of legitimate trade execution for prop firms"
+            description="Example trade record; execution and authorization are not established"
           />
         </div>
       </div>
