@@ -91,11 +91,18 @@ let context;
 
   const namedControls = await page.getByRole('link', { name: 'Back to event', exact: true }).count() === 1
     && await page.getByRole('button', { name: 'Copy Event ID', exact: true }).count() === 1
-    && await page.getByRole('button', { name: 'Copy event hash', exact: true }).count() === 1
-    && await page.getByRole('link', { name: 'View demo transaction on Etherscan (opens in a new tab)', exact: true }).count() === 1;
+    && await page.getByRole('button', { name: 'Copy event hash', exact: true }).count() === 1;
   results.push({ kind: 'certificate-icon-accessible-names', ok: namedControls });
+  results.push({ kind: 'no-demo-transaction-explorer-link',
+    ok: await page.locator('a[href*="etherscan.io/tx/"]').count() === 0 });
 
   await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto(origin + '/');
+  const disclosure = page.getByText('Demo data — not verified. Displayed anchors, tiers and certificates do not establish on-chain anchoring or certification.', { exact: true });
+  await disclosure.waitFor();
+  results.push({ kind: 'mobile-disclosure-with-menu-closed',
+    ok: await disclosure.isVisible()
+      && !(await page.getByRole('navigation', { name: 'Mobile navigation' }).isVisible()) });
   await page.goto(origin + certPath);
   const mobileMenu = page.getByRole('button', { name: 'Open navigation menu' });
   await mobileMenu.click();

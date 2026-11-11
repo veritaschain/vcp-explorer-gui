@@ -3,8 +3,11 @@
 The `veritaschain/vcp-explorer-gui` repository contains a mock-data reference UI.
 The public `https://veritaschain.org/explorer/app/` path is presently served from
 `veritaschain/vcp-site/explorer/app/`, **not** automatically from this repository.
-The legacy static Explorer is already live there. The new Evidence Demo is not
-published, and no public Node evidence-verification API has been verified.
+The static Explorer and its SDK Evidence Demo were published through the dated
+[28 October rollout record](https://github.com/veritaschain/vcp-site/tree/main/maintenance/explorer-evidence-demo-2026-10-28).
+That record fixes the then-published inputs and observed results; consult the
+current site entry point and later maintenance records for subsequent bundles.
+The demonstration remains synthetic, with no verified external anchor.
 
 ## Why this profile exists
 
@@ -47,7 +50,10 @@ URLs and uses the local browser-router profile, not this static-host profile.
 ## Review and publication boundaries
 
 1. Stage the generated hashed `dist/assets` files and public logo into a new
-   `vcp-site` PR without deleting old assets, which remain for rollback.
+   `vcp-site` PR. Check references before removing obsolete public bundles and
+   keep their recorded paths and hashes in the dated maintenance history.
+   Git history preserves the old files for an explicit rollback; abandoned
+   public bundles must not keep presenting withdrawn claims.
 2. Do **not** blindly overwrite the public `explorer/app/index.html` with
    Vite's generated index. The current site entry point has canonical/OG/JSON-LD
    metadata and the **24 October 2026 integrity-review notice**. Preserve
