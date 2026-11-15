@@ -9,6 +9,7 @@ evidence-demo-test-output/
 dist-api/
 dist-mock/
 hash-chain-report/
+.query-tools/
 
 # Local AI-agent permission records may contain credentials in command arguments.
 **/.claude/settings.local.json

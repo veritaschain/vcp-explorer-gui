@@ -30,7 +30,7 @@ jobs:
         run: |
           npm install --prefix .browser-tools --ignore-scripts --no-audit --save-exact playwright@1.56.1
           node .browser-tools/node_modules/playwright/cli.js install --with-deps chromium
-      - name: Inspect trace selection, failures and scoped results in Chromium
+      - name: Inspect chain, search and dashboard states in Chromium
         env:
           PW_MODULE: ${{ github.workspace }}/.browser-tools/node_modules/playwright
           HASH_CHAIN_GUI_URL: http://127.0.0.1:4173/chain
@@ -49,6 +49,7 @@ jobs:
           curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 --max-time 3 --retry-max-time 30 --output /dev/null http://127.0.0.1:4173/chain
           curl --fail --silent --show-error --retry 10 --retry-all-errors --retry-delay 1 --max-time 3 --retry-max-time 30 --output /dev/null http://127.0.0.1:4174/chain
           timeout 180 node tools/tests/check-hash-chain.cjs
+          timeout 120 node tools/tests/check-search-dashboard.cjs
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

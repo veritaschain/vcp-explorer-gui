@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useSearchParams, useLocation, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Search,
@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { vcpClient } from '@/lib/api-client';
+import { resolveSearchQuery, SEARCH_SYMBOLS } from '@/lib/search-query';
 import { formatDate, cn, getEventTypeColor } from '@/lib/utils';
 import { EventTypeBadge } from '@/components/features/EventTypeBadge';
 import { StatusBadge } from '@/components/features/StatusBadge';
@@ -22,14 +23,16 @@ import type { EventType, EventSearchParams } from '@/types/vcp';
 import { EVENT_TYPE_CODES } from '@/types/vcp';
 
 const EVENT_TYPES = Object.keys(EVENT_TYPE_CODES) as EventType[];
-const SYMBOLS = ['XAUUSD', 'EURUSD', 'BTCUSDT', 'USDJPY', 'GBPUSD'];
+const SYMBOLS = SEARCH_SYMBOLS;
 
 export function SearchPage() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const urlQuery = searchParams.get('q') || '';
   const [showFilters, setShowFilters] = useState(false);
 
   // Filter states
-  const [query, setQuery] = useState(searchParams.get('q') || '');
+  const [query, setQuery] = useState(urlQuery);
   const [eventType, setEventType] = useState<EventType | ''>('');
   const [symbol, setSymbol] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -37,24 +40,25 @@ export function SearchPage() {
   const [page, setPage] = useState(1);
   const limit = 20;
 
+  // A global search can navigate to this same mounted page, including the same
+  // URL after the local input changed. Start that navigation's search afresh.
+  useEffect(() => {
+    setQuery(urlQuery);
+    setEventType('');
+    setSymbol('');
+    setStartTime('');
+    setEndTime('');
+    setPage(1);
+  }, [location.key, urlQuery]);
+  const queryInput = resolveSearchQuery(query);
+
   // Build search params
   const buildParams = (): EventSearchParams => {
     const params: EventSearchParams = {
+      ...queryInput.params,
       limit,
       offset: (page - 1) * limit,
     };
-
-    // Check if query looks like UUID (trace_id or event_id)
-    if (query) {
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (uuidRegex.test(query)) {
-        params.trace_id = query;
-      } else if (SYMBOLS.includes(query.toUpperCase())) {
-        params.symbol = query.toUpperCase();
-      } else if (EVENT_TYPES.includes(query.toUpperCase() as EventType)) {
-        params.event_type = query.toUpperCase() as EventType;
-      }
-    }
 
     if (eventType) params.event_type = eventType;
     if (symbol) params.symbol = symbol;
@@ -65,16 +69,21 @@ export function SearchPage() {
   };
 
   // Fetch events
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data: response, isLoading, isFetching, fetchStatus, error, refetch } = useQuery({
     queryKey: ['searchEvents', query, eventType, symbol, startTime, endTime, page],
-    queryFn: () => vcpClient.searchEvents(buildParams()),
+    queryFn: ({ signal }) => vcpClient.searchEvents(buildParams(), signal),
+    enabled: !queryInput.error,
   });
+  const searchPaused = !queryInput.error && fetchStatus === 'paused';
+  const data = queryInput.error || error || searchPaused ? undefined : response;
 
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (queryInput.error) return;
     setPage(1);
-    refetch();
+    // A page change already starts the new query. Do not also refetch the old offset.
+    if (page === 1) void refetch();
   };
 
   // Clear filters
@@ -90,8 +99,9 @@ export function SearchPage() {
   // Check if any filters are active
   const hasActiveFilters = eventType || symbol || startTime || endTime;
 
-  // Calculate pagination
-  const totalPages = data ? Math.ceil(data.total / limit) : 0;
+  // The real API's total is the returned-page count, not a global match count.
+  // A full page permits trying the next page; it does not establish one exists.
+  const hasNextPage = data?.events.length === limit;
 
   return (
     <div className="space-y-6">
@@ -99,7 +109,7 @@ export function SearchPage() {
       <div>
         <h1 className="text-2xl font-bold text-white">Search Events</h1>
         <p className="text-vcp-400 mt-1">
-          Search and filter VCP events by ID, type, symbol, or time range
+          Search by Trace ID, event type, symbol, or time range. Open individual Event IDs separately.
         </p>
       </div>
 
@@ -111,8 +121,9 @@ export function SearchPage() {
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by Event ID, Trace ID, Symbol, or Event Type..."
+              onChange={(e) => { setQuery(e.target.value); setPage(1); }}
+              aria-label="Search query"
+              placeholder="Search by Trace ID, Symbol, or Event Type..."
               className="input-field pl-12 text-lg"
             />
           </div>
@@ -159,7 +170,7 @@ export function SearchPage() {
                 </label>
                 <select
                   value={eventType}
-                  onChange={(e) => setEventType(e.target.value as EventType | '')}
+                  onChange={(e) => { setEventType(e.target.value as EventType | ''); setPage(1); }}
                   className="input-field"
                 >
                   <option value="">All Types</option>
@@ -178,7 +189,7 @@ export function SearchPage() {
                 </label>
                 <select
                   value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
+                  onChange={(e) => { setSymbol(e.target.value); setPage(1); }}
                   className="input-field"
                 >
                   <option value="">All Symbols</option>
@@ -198,7 +209,7 @@ export function SearchPage() {
                 <input
                   type="datetime-local"
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
+                  onChange={(e) => { setStartTime(e.target.value); setPage(1); }}
                   className="input-field"
                 />
               </div>
@@ -211,7 +222,7 @@ export function SearchPage() {
                 <input
                   type="datetime-local"
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  onChange={(e) => { setEndTime(e.target.value); setPage(1); }}
                   className="input-field"
                 />
               </div>
@@ -219,6 +230,15 @@ export function SearchPage() {
           </div>
         )}
       </div>
+
+      {queryInput.eventId && (
+        <p className="text-sm text-vcp-300">
+          UUID searches filter by Trace ID. For this individual event,{' '}
+          <Link className="text-vcp-200 underline hover:text-white" to={`/events/${encodeURIComponent(queryInput.eventId)}`}>
+            Open as Event ID
+          </Link>.
+        </p>
+      )}
 
       {/* Quick Filters */}
       <div className="flex flex-wrap gap-2">
@@ -248,10 +268,10 @@ export function SearchPage() {
         <div className="p-4 border-b border-vcp-800 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="text-sm text-vcp-400">
-              {data ? (
+              {queryInput.error ? 'Search not run' : searchPaused ? 'Waiting for a connection' : error ? 'Results unavailable' : isFetching ? 'Searching...' : data ? (
                 <>
-                  Showing {((page - 1) * limit) + 1}-{Math.min(page * limit, data.total)} of{' '}
-                  <span className="text-white font-medium">{data.total}</span> results
+                  {data.events.length > 0 && <>Showing {((page - 1) * limit) + 1}-{((page - 1) * limit) + data.events.length} · </>}
+                  <span className="text-white font-medium">{data.events.length}</span> records returned
                 </>
               ) : (
                 'Loading...'
@@ -259,31 +279,15 @@ export function SearchPage() {
             </span>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-2 text-vcp-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-sm text-vcp-400">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="p-2 text-vcp-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <span className="text-sm text-vcp-400">Page {page}</span>
         </div>
 
         {/* Loading State */}
+        {searchPaused && (
+          <p role="status" className="p-12 text-center text-vcp-300">
+            The search is waiting for a connection. No current results are shown.
+          </p>
+        )}
         {isLoading && (
           <div className="p-12 text-center">
             <Loader2 className="w-8 h-8 text-vcp-400 mx-auto mb-4 animate-spin" />
@@ -292,10 +296,15 @@ export function SearchPage() {
         )}
 
         {/* Error State */}
-        {error && (
-          <div className="p-12 text-center">
+        {(queryInput.error || (error && !searchPaused)) && (
+          <div role="alert" className="p-12 text-center">
             <AlertCircle className="w-8 h-8 text-reject-400 mx-auto mb-4" />
-            <p className="text-reject-400">Error loading events. Please try again.</p>
+            <p className="text-reject-400">{queryInput.error || 'Error loading events. No current results are available.'}</p>
+            {!queryInput.error && (
+              <button type="button" onClick={() => void refetch()} disabled={isFetching} className="btn-secondary mt-4">
+                Retry search
+              </button>
+            )}
           </div>
         )}
 
@@ -303,19 +312,20 @@ export function SearchPage() {
         {data && data.events.length === 0 && (
           <div className="p-12 text-center">
             <Search className="w-8 h-8 text-vcp-600 mx-auto mb-4" />
-            <p className="text-vcp-400">No events found matching your criteria.</p>
+            <p className="text-vcp-400">No events returned on this page.</p>
             <button
-              onClick={clearFilters}
+              onClick={page > 1 ? () => setPage(1) : clearFilters}
+              disabled={isFetching}
               className="mt-4 text-sm text-vcp-400 hover:text-white"
             >
-              Clear filters and try again
+              {page > 1 ? 'Back to first page' : 'Clear filters and try again'}
             </button>
           </div>
         )}
 
         {/* Results List */}
         {data && data.events.length > 0 && (
-          <div className="divide-y divide-vcp-800">
+          <div data-testid="search-results" className="divide-y divide-vcp-800">
             {data.events.map((event) => (
               <Link
                 key={event.event_id}
@@ -364,68 +374,36 @@ export function SearchPage() {
         )}
 
         {/* Bottom Pagination */}
-        {data && totalPages > 1 && (
-          <div className="p-4 border-t border-vcp-800 flex justify-center">
-            <div className="flex items-center gap-1">
+        {(page > 1 || hasNextPage) && (
+          <nav aria-label="Search result pages" className="p-4 border-t border-vcp-800 text-center">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <button
+                type="button"
                 onClick={() => setPage(1)}
-                disabled={page === 1}
+                disabled={page === 1 || isFetching}
                 className="px-3 py-1 text-sm text-vcp-400 hover:text-white disabled:opacity-50"
               >
                 First
               </button>
               <button
+                type="button"
                 onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="p-2 text-vcp-400 hover:text-white disabled:opacity-50"
+                disabled={page === 1 || isFetching}
+                className="inline-flex items-center gap-1 p-2 text-sm text-vcp-400 hover:text-white disabled:opacity-50"
               >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              {/* Page numbers */}
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (page <= 3) {
-                  pageNum = i + 1;
-                } else if (page >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = page - 2 + i;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setPage(pageNum)}
-                    className={cn(
-                      'w-8 h-8 text-sm rounded',
-                      page === pageNum
-                        ? 'bg-vcp-600 text-white'
-                        : 'text-vcp-400 hover:text-white hover:bg-vcp-800/50'
-                    )}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="p-2 text-vcp-400 hover:text-white disabled:opacity-50"
-              >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronLeft aria-hidden="true" className="w-4 h-4" /> Previous
               </button>
               <button
-                onClick={() => setPage(totalPages)}
-                disabled={page === totalPages}
-                className="px-3 py-1 text-sm text-vcp-400 hover:text-white disabled:opacity-50"
+                type="button"
+                onClick={() => setPage(p => p + 1)}
+                disabled={!hasNextPage || isFetching}
+                className="inline-flex items-center gap-1 p-2 text-sm text-vcp-400 hover:text-white disabled:opacity-50"
               >
-                Last
+                Next <ChevronRight aria-hidden="true" className="w-4 h-4" />
               </button>
             </div>
-          </div>
+            <p className="mt-2 text-xs text-vcp-400">Total matching count is unavailable. A full page may have more results.</p>
+          </nav>
         )}
       </div>
     </div>

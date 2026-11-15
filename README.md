@@ -39,9 +39,15 @@ the fixed inputs and the actual verification boundary. This demo does not
 establish VCP/VAP conformance, certification or production readiness.
 
 ### 🔍 Event Search & Exploration
-- Advanced search by Event ID, Trace ID, Symbol, or Event Type
-- Filter by time range, venue, and algorithm
-- Paginated results with real-time updates
+- Search the event list by Trace ID, a preset symbol, or Event Type
+- Open a UUID explicitly as an Event ID through the event-detail link
+- Filter by time range, symbol and event type, with pagination reset when a filter changes
+
+Unsupported hash/free-text searches show a validation message and do not fetch
+the unfiltered list. Dashboard and search failures are distinct from loading or
+empty results. Failed or offline-paused refreshes hide the previous data until
+the request succeeds. See [search and dashboard states](docs/QUERY_STATES.md) for the request
+contract and bounded regression checks.
 
 ### 📄 Event Details
 - Complete VCP event structure visualization
@@ -194,7 +200,7 @@ npm run build
 # Preview production build
 npm run preview
 
-# Type checking
+# Linting (the build also runs TypeScript)
 npm run lint
 ```
 
