@@ -22,18 +22,23 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch system status
-  const { data: systemStatus } = useQuery({
+  const systemQuery = useQuery({
     queryKey: ['systemStatus'],
     queryFn: () => vcpClient.getSystemStatus(),
     refetchInterval: 30000,
   });
 
   // Fetch recent events
-  const { data: recentEvents, isLoading: eventsLoading } = useQuery({
+  const eventsQuery = useQuery({
     queryKey: ['recentEvents'],
     queryFn: () => vcpClient.searchEvents({ limit: 10 }),
     refetchInterval: 10000,
   });
+  // Failed or offline-paused refreshes cannot present cached data as current.
+  const systemPaused = systemQuery.fetchStatus === 'paused';
+  const eventsPaused = eventsQuery.fetchStatus === 'paused';
+  const systemStatus = systemQuery.isError || systemPaused ? undefined : systemQuery.data;
+  const recentEvents = eventsQuery.isError || eventsPaused ? undefined : eventsQuery.data;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +74,7 @@ export function Dashboard() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by Event ID, Trace ID, Symbol, or Hash..."
+                placeholder="Search by Trace ID, Symbol, or Event Type..."
                 className="w-full pl-12 pr-32 py-4 bg-vcp-900/80 border border-vcp-700/50 rounded-xl
                          text-white placeholder-vcp-500
                          focus:outline-none focus:ring-2 focus:ring-vcp-500/50 focus:border-vcp-500
@@ -113,6 +118,19 @@ export function Dashboard() {
       </Link>
 
       {/* Stats Grid */}
+      {systemPaused ? (
+        <p role="status" className="glass-card p-5 text-sm text-vcp-300">
+          Waiting for a connection to load system metadata. No current metadata is shown.
+        </p>
+      ) : systemQuery.isError && (
+        <div role="alert" className="glass-card border-reject-500/40 p-5">
+          <h2 className="font-semibold text-white">System metadata unavailable</h2>
+          <p className="mt-2 text-sm text-vcp-300">Could not load current system metadata. No current node, tier or anchor information is available.</p>
+          <button type="button" className="btn-secondary mt-3" onClick={() => void systemQuery.refetch()} disabled={systemQuery.isFetching}>
+            Retry system metadata
+          </button>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={Database}
@@ -162,12 +180,26 @@ export function Dashboard() {
             </Link>
           </div>
 
-          {eventsLoading ? (
-            <div className="space-y-3">
+          {eventsPaused ? (
+            <p role="status" className="text-sm text-vcp-300">
+              Waiting for a connection to load recent events. No current results are shown.
+            </p>
+          ) : eventsQuery.isError ? (
+            <div role="alert" className="space-y-3 text-sm text-vcp-300">
+              <p>Could not load recent events. No current results are available.</p>
+              <button type="button" className="btn-secondary" onClick={() => void eventsQuery.refetch()} disabled={eventsQuery.isFetching}>
+                Retry recent events
+              </button>
+            </div>
+          ) : eventsQuery.isPending ? (
+            <div role="status" className="space-y-3">
+              <span className="sr-only">Loading recent events...</span>
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="h-14 bg-vcp-800/30 rounded-lg animate-pulse" />
               ))}
             </div>
+          ) : recentEvents?.events.length === 0 ? (
+            <p role="status" className="text-sm text-vcp-300">No recent events returned.</p>
           ) : (
             <div className="space-y-2">
               {recentEvents?.events.map((event) => (
@@ -208,7 +240,11 @@ export function Dashboard() {
             Reported Anchor
           </h2>
 
-          {systemStatus?.last_anchor ? (
+          {systemPaused ? (
+            <p role="status" className="text-sm text-vcp-300">Waiting for a connection to load anchor metadata.</p>
+          ) : systemQuery.isError ? (
+            <p role="status" className="text-sm text-vcp-300">No current anchor metadata available.</p>
+          ) : systemStatus?.last_anchor ? (
             <div className="space-y-4">
               <div className="p-4 bg-anomaly-500/10 border border-anomaly-500/20 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
@@ -248,9 +284,11 @@ export function Dashboard() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 p-4 bg-anomaly-500/10 border border-anomaly-500/20 rounded-lg">
+            <div role="status" className="flex items-center gap-2 p-4 bg-anomaly-500/10 border border-anomaly-500/20 rounded-lg">
               <AlertCircle className="w-4 h-4 text-anomaly-400" />
-              <span className="text-sm text-anomaly-400">Loading anchor data...</span>
+              <span className="text-sm text-anomaly-400">
+                {systemQuery.isPending ? 'Loading anchor data...' : 'No anchor record supplied.'}
+              </span>
             </div>
           )}
         </div>

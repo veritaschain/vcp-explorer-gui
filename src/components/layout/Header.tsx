@@ -55,7 +55,7 @@ export function Header() {
               aria-label="Search events"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by Event ID, Trace ID, Symbol, or Hash..."
+              placeholder="Search by Trace ID, Symbol, or Event Type..."
               className="w-full pl-10 pr-4 py-2 bg-vcp-800/50 border border-vcp-700/50 rounded-lg
                        text-sm text-white placeholder-vcp-500
                        focus:outline-none focus:ring-2 focus:ring-vcp-500/50 focus:border-vcp-500
