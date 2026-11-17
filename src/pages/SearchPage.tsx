@@ -129,6 +129,8 @@ export function SearchPage() {
           </div>
           <button
             type="button"
+            aria-expanded={showFilters}
+            aria-controls="advanced-search-filters"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
               'btn-secondary flex items-center gap-2',
@@ -147,8 +149,7 @@ export function SearchPage() {
         </form>
 
         {/* Advanced Filters */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t border-vcp-800">
+          <div id="advanced-search-filters" hidden={!showFilters} className="mt-4 pt-4 border-t border-vcp-800">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-vcp-400">Advanced Filters</h3>
               {hasActiveFilters && (
@@ -165,10 +166,11 @@ export function SearchPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Event Type */}
               <div>
-                <label className="text-xs text-vcp-500 uppercase tracking-wider mb-1 block">
+                <label htmlFor="search-event-type" className="text-xs text-vcp-500 uppercase tracking-wider mb-1 block">
                   Event Type
                 </label>
                 <select
+                  id="search-event-type"
                   value={eventType}
                   onChange={(e) => { setEventType(e.target.value as EventType | ''); setPage(1); }}
                   className="input-field"
@@ -184,10 +186,11 @@ export function SearchPage() {
 
               {/* Symbol */}
               <div>
-                <label className="text-xs text-vcp-500 uppercase tracking-wider mb-1 block">
+                <label htmlFor="search-symbol" className="text-xs text-vcp-500 uppercase tracking-wider mb-1 block">
                   Symbol
                 </label>
                 <select
+                  id="search-symbol"
                   value={symbol}
                   onChange={(e) => { setSymbol(e.target.value); setPage(1); }}
                   className="input-field"
@@ -203,10 +206,11 @@ export function SearchPage() {
 
               {/* Start Time */}
               <div>
-                <label className="text-xs text-vcp-500 uppercase tracking-wider mb-1 block">
+                <label htmlFor="search-start-time" className="text-xs text-vcp-500 uppercase tracking-wider mb-1 block">
                   Start Time
                 </label>
                 <input
+                  id="search-start-time"
                   type="datetime-local"
                   value={startTime}
                   onChange={(e) => { setStartTime(e.target.value); setPage(1); }}
@@ -216,10 +220,11 @@ export function SearchPage() {
 
               {/* End Time */}
               <div>
-                <label className="text-xs text-vcp-500 uppercase tracking-wider mb-1 block">
+                <label htmlFor="search-end-time" className="text-xs text-vcp-500 uppercase tracking-wider mb-1 block">
                   End Time
                 </label>
                 <input
+                  id="search-end-time"
                   type="datetime-local"
                   value={endTime}
                   onChange={(e) => { setEndTime(e.target.value); setPage(1); }}
@@ -228,7 +233,6 @@ export function SearchPage() {
               </div>
             </div>
           </div>
-        )}
       </div>
 
       {queryInput.eventId && (
