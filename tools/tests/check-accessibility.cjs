@@ -12,6 +12,7 @@ fs.mkdirSync(out, { recursive: true });
 const errors = [];
 const results = [];
 const controls = [];
+const searchFilters = [];
 const server = http.createServer((req, res) => {
   let rel;
   try { rel = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname); }
@@ -96,6 +97,98 @@ let browser, context;
     if (printMedia) await page.emulateMedia({media:'screen'});
     return item;
   }
+
+  // The search disclosure was absent from the earlier dashboard/certificate
+  // scans. Test its expanded controls and native keyboard behavior explicitly.
+  async function checkSearchFilters(width) {
+    const item = { width, passed: false };
+    searchFilters.push(item);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(origin + '/search');
+    await page.getByRole('heading', { name: 'Search Events', exact: true }).waitFor();
+    await page.addScriptTag({ path: axePath });
+    const toggle = page.getByRole('button', { name: 'Filters', exact: true });
+    const panelId = await toggle.getAttribute('aria-controls');
+    assert.match(panelId || '', /^[a-zA-Z][a-zA-Z0-9_-]*$/, 'Filters must identify its controlled panel');
+    const panel = page.locator('#' + panelId);
+    assert.equal(await panel.count(), 1);
+    assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(await panel.isVisible(), false);
+    assert.equal(await page.getByRole('combobox').count(), 0, 'Collapsed controls must not be in the accessibility tree');
+
+    await toggle.focus();
+    await toggle.press('Enter');
+    await panel.waitFor({ state: 'visible' });
+    assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+    const names = ['Event Type', 'Symbol', 'Start Time', 'End Time'];
+    for (const name of names) {
+      const field = panel.getByLabel(name, { exact: true });
+      assert.equal(await field.count(), 1, `${name} must identify exactly one control`);
+      assert.equal(await field.isVisible(), true);
+    }
+    const eventType = panel.getByRole('combobox', { name: 'Event Type', exact: true });
+    const symbol = panel.getByRole('combobox', { name: 'Symbol', exact: true });
+    assert.equal(await eventType.count(), 1);
+    assert.equal(await symbol.count(), 1);
+
+    // Filters, Search, Event Type, Symbol retain their native DOM tab order.
+    await toggle.focus();
+    await page.keyboard.press('Tab');
+    assert.equal(await page.getByRole('button', { name: 'Search', exact: true }).evaluate(el => el === document.activeElement), true);
+    await page.keyboard.press('Tab');
+    assert.equal(await eventType.evaluate(el => el === document.activeElement), true);
+    await page.keyboard.press('Tab');
+    assert.equal(await symbol.evaluate(el => el === document.activeElement), true);
+    for (const name of ['Start Time', 'End Time']) {
+      await panel.getByText(name, { exact: true }).click();
+      assert.equal(await panel.getByLabel(name, { exact: true }).evaluate(el => el === document.activeElement), true,
+        `Clicking ${name} must focus its associated input`);
+    }
+    const controlNames = await panel.locator('input, select').evaluateAll(elements => elements.map(el => ({
+      tag: el.tagName, type: el.type, labels: Array.from(el.labels || []).map(label => label.textContent.trim()),
+    })));
+    assert.deepEqual(controlNames.map(field => field.labels), names.map(name => [name]));
+
+    async function labelScan() {
+      return await panel.evaluate(async el => window.axe.run(el, {
+        runOnly: { type: 'rule', values: ['label', 'select-name'] },
+        resultTypes: ['violations', 'incomplete'],
+      }));
+    }
+    const candidate = await labelScan();
+    assert.equal(candidate.violations.length, 0);
+    assert.equal(candidate.incomplete.length, 0);
+
+    // Recreate the old unassociated-label defect on this test-only DOM. The
+    // gate must reject every control instead of accepting visible label text.
+    const associations = await panel.locator('label').evaluateAll(labels => labels.map(label => {
+      const previous = label.htmlFor;
+      label.removeAttribute('for');
+      return previous;
+    }));
+    const negative = await labelScan();
+    item.negativeControl = short(negative.violations);
+    for (const name of names) assert.equal(await panel.getByLabel(name, { exact: true }).count(), 0);
+    assert.equal(negative.violations.flatMap(rule => rule.nodes).length, 4,
+      'The old unassociated labels must fail for all four controls');
+    await panel.locator('label').evaluateAll((labels, values) => labels.forEach((label, i) => { label.htmlFor = values[i]; }), associations);
+    const restored = await labelScan();
+    assert.equal(restored.violations.length, 0);
+    assert.equal(restored.incomplete.length, 0);
+
+    await eventType.selectOption('ORD');
+    await toggle.focus();
+    await toggle.press('Space');
+    await panel.waitFor({ state: 'hidden' });
+    assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(await page.getByRole('combobox').count(), 0);
+    await toggle.press('Enter');
+    await panel.waitFor({ state: 'visible' });
+    assert.equal(await eventType.inputValue(), 'ORD', 'Collapsing a disclosure must preserve its filter value');
+    item.controls = controlNames;
+    item.passed = true;
+    await page.screenshot({ path: path.join(out, 'search-filters-' + width + '.png'), fullPage: true });
+  }
   await page.goto(origin+'/');
   await page.locator('a[href^="/events/"]').first().waitFor();
   const eventLink=await page.locator('a[href^="/events/"]').first().getAttribute('href');
@@ -120,21 +213,25 @@ let browser, context;
   const restored = await certificateContrast();
   controls.push({name:'restored-candidate',accepted:restored.ok,observed:restored});
 
+  await checkSearchFilters(1440);
+  await checkSearchFilters(390);
+
   const gateFailures = results.filter(r=>r.certificateContrast && !r.certificateContrast.ok).map(r=>r.label);
   const calibrationOk = controls.length === 3 && controls[0].rejected && controls[1].rejected && controls[2].accepted;
   const totalViolations = results.reduce((n,x)=>n+x.violations.length,0);
-  const ok = !errors.length && !totalViolations && !gateFailures.length && calibrationOk;
+  const searchFiltersOk = searchFilters.length === 2 && searchFilters.every(item => item.passed);
+  const ok = !errors.length && !totalViolations && !gateFailures.length && calibrationOk && searchFiltersOk;
   const summary={
-    status:ok?'NO_AUTOMATED_VIOLATIONS_CERTIFICATE_CONTRAST_CHECKED':'ISSUES_FOUND',
+    status:ok?'NO_AUTOMATED_VIOLATIONS_CERTIFICATE_CONTRAST_AND_SEARCH_FILTERS_CHECKED':'ISSUES_FOUND',
     scans:results,totalViolations,certificateContrastGateFailures:gateFailures,
-    calibrationOk,controls,
+    calibrationOk,controls,searchFiltersOk,searchFilters,
     uniqueRules:[...new Set(results.flatMap(x=>x.violations.map(y=>y.rule)))],
     browserErrors:errors,
-    limits:'Bounded first-party mock UI. Certificate text contrast must be measured with no incomplete nodes. Whole-page incomplete/manual checks outside that surface remain unresolved; not PDF/UA or screen-reader conformance.',
+    limits:'Bounded first-party mock UI. Certificate text contrast must be measured with no incomplete nodes. Search checks cover four control names, disclosure state and selected native keyboard interactions. Whole-page incomplete/manual checks outside those scopes remain unresolved; not PDF/UA or screen-reader conformance.',
   };
   fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(summary,null,2)+'\n');
   console.log(JSON.stringify({
-    status:summary.status,calibrationOk,gateFailures,
+    status:summary.status,calibrationOk,gateFailures,searchFiltersOk,searchFilters,
     scans:results.map(x=>({label:x.label,violations:x.violations.map(v=>({rule:v.rule,nodes:v.nodes})),incomplete:x.incomplete.map(v=>({rule:v.rule,nodes:v.nodes.length})),certificateContrast:x.certificateContrast ? {ok:x.certificateContrast.ok,passingTextNodes:x.certificateContrast.passingTextNodes,violations:x.certificateContrast.violations.map(v=>({id:v.id,nodes:v.nodes})),incomplete:x.certificateContrast.incomplete.map(v=>({id:v.id,nodes:v.nodes})),background:x.certificateContrast.background,labelColor:x.certificateContrast.labelColor} : null})),
     controls:controls.map(c=>({name:c.name,rejected:c.rejected,accepted:c.accepted,violations:c.observed.violations.length,incomplete:c.observed.incomplete.length})),
     browserErrors:errors,
@@ -142,7 +239,7 @@ let browser, context;
   if(!ok) process.exitCode=1;
 })().catch(e=>{
   console.error(e);process.exitCode=1;
-  fs.writeFileSync(path.join(out,'error.json'),JSON.stringify({error:String(e),results,controls,browserErrors:errors},null,2)+'\n');
+  fs.writeFileSync(path.join(out,'error.json'),JSON.stringify({error:String(e),results,controls,searchFilters,browserErrors:errors},null,2)+'\n');
 }).finally(async()=>{
   if(context)await context.close();
   if(browser)await browser.close();
