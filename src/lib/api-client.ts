@@ -121,19 +121,21 @@ class VCPExplorerClient {
   // Verification Endpoints
   // ============================================================
 
-  async getMerkleProof(eventId: string): Promise<MerkleProofResponse> {
+  async getMerkleProof(eventId: string, signal?: AbortSignal): Promise<MerkleProofResponse> {
+    signal?.throwIfAborted();
     if (this.useMock) {
       return getMockProof(eventId);
     }
-    const response = await this.client.get<MerkleProofResponse>(`/events/${eventId}/proof`);
+    const response = await this.client.get<MerkleProofResponse>(`/events/${encodeURIComponent(eventId)}/proof`, { signal });
     return response.data;
   }
 
-  async getCertificate(eventId: string): Promise<CertificateResponse> {
+  async getCertificate(eventId: string, signal?: AbortSignal): Promise<CertificateResponse> {
+    signal?.throwIfAborted();
     if (this.useMock) {
       return getMockCertificate(eventId);
     }
-    const response = await this.client.get<CertificateResponse>(`/events/${eventId}/certificate`);
+    const response = await this.client.get<CertificateResponse>(`/events/${encodeURIComponent(eventId)}/certificate`, { signal });
     return response.data;
   }
 

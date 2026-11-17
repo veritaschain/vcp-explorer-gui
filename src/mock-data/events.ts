@@ -13,6 +13,7 @@ import type {
   EventType,
 } from '@/types/vcp';
 import { DEMO_MERKLE_FIXTURE } from './merkle-fixture.ts';
+import { ResourceNotFoundError } from '../lib/resource-errors.ts';
 
 // Generate nanosecond timestamp string
 function generateNsTimestamp(date: Date = new Date()): string {
@@ -213,7 +214,7 @@ export function getMockEvents(params: EventSearchParams = {}): EventSearchRespon
 // Get mock event detail
 export function getMockEventDetail(eventId: string): EventDetailResponse {
   const index = MOCK_EVENTS.findIndex((e) => e.event_id === eventId);
-  if (index < 0) throw new Error('Demo event is not available for this event ID');
+  if (index < 0) throw new ResourceNotFoundError('Demo event is not available for this event ID');
   const event = MOCK_EVENTS[index];
   const eventHash = MOCK_HASHES[index + 1];
   const prevHash = MOCK_HASHES[index];
@@ -331,7 +332,7 @@ export function getMockEventDetail(eventId: string): EventDetailResponse {
 // Get mock Merkle proof
 export function getMockProof(eventId: string): MerkleProofResponse {
   const index = MOCK_EVENTS.findIndex((e) => e.event_id === eventId);
-  if (index < 0) throw new Error('Demo proof is not available for this event');
+  if (index < 0) throw new ResourceNotFoundError('Demo proof is not available for this event');
   const auditPath = [...DEMO_MERKLE_FIXTURE.audit_paths[index]];
 
   return {

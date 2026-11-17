@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { isResourceNotFound } from '@/lib/resource-errors';
 import {
   ArrowLeft,
   Copy,
@@ -27,11 +28,13 @@ export function EventDetail() {
   const { eventId } = useParams<{ eventId: string }>();
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const { data: event, isLoading, error } = useQuery({
+  const { data: response, isFetching, fetchStatus, error, refetch } = useQuery({
     queryKey: ['event', eventId],
-    queryFn: () => vcpClient.getEventById(eventId!),
+    queryFn: ({ signal }) => vcpClient.getEventById(eventId!, signal),
     enabled: !!eventId,
   });
+
+  const event = !error && fetchStatus === 'idle' ? response : undefined;
 
   const handleCopy = async (value: string, field: string) => {
     const success = await copyToClipboard(value);
@@ -41,7 +44,16 @@ export function EventDetail() {
     }
   };
 
-  if (isLoading) {
+  if (fetchStatus === 'paused') {
+    return (
+      <div className="glass-card p-8 text-center" role="status">
+        <h2 className="text-xl font-semibold text-white mb-2">Waiting for a connection</h2>
+        <p className="text-vcp-400">The event request is paused. Current event details are unavailable.</p>
+      </div>
+    );
+  }
+
+  if (isFetching) {
     return (
       <div className="space-y-6">
         <div className="h-12 bg-vcp-800/30 rounded-lg animate-pulse w-1/3" />
@@ -53,7 +65,17 @@ export function EventDetail() {
     );
   }
 
-  if (error || !event) {
+  if (error && !isResourceNotFound(error)) {
+    return (
+      <div className="glass-card p-8 text-center" role="alert">
+        <h2 className="text-xl font-semibold text-white mb-2">Could not load event</h2>
+        <p className="text-vcp-400 mb-6">The request failed. Availability cannot be determined from this response.</p>
+        <button type="button" onClick={() => void refetch()} className="btn-primary">Retry event request</button>
+      </div>
+    );
+  }
+
+  if (!event) {
     return (
       <div className="glass-card p-8 text-center">
         <AlertCircle className="w-12 h-12 text-reject-400 mx-auto mb-4" />
