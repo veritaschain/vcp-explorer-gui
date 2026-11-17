@@ -1,0 +1,292 @@
+[
+  {
+    "path": "",
+    "before_version": "1.0.0",
+    "after_version": "1.0.0",
+    "changed_fields": [
+      "devDependencies"
+    ],
+    "before_dependencies": {
+      "@tanstack/react-query": "^5.59.0",
+      "axios": "^1.7.7",
+      "class-variance-authority": "^0.7.0",
+      "clsx": "^2.1.1",
+      "date-fns": "^4.1.0",
+      "framer-motion": "^11.11.11",
+      "lucide-react": "^0.454.0",
+      "react": "^18.3.1",
+      "react-dom": "^18.3.1",
+      "react-router-dom": "7.18.4",
+      "tailwind-merge": "^2.5.4"
+    },
+    "after_dependencies": {
+      "@tanstack/react-query": "^5.59.0",
+      "axios": "^1.7.7",
+      "class-variance-authority": "^0.7.0",
+      "clsx": "^2.1.1",
+      "date-fns": "^4.1.0",
+      "framer-motion": "^11.11.11",
+      "lucide-react": "^0.454.0",
+      "react": "^18.3.1",
+      "react-dom": "^18.3.1",
+      "react-router-dom": "7.18.4",
+      "tailwind-merge": "^2.5.4"
+    }
+  },
+  {
+    "path": "node_modules/@isaacs/nonrecursive-glob-match",
+    "before_version": null,
+    "after_version": "1.1.0",
+    "changed_fields": [
+      "dev",
+      "integrity",
+      "license",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": null,
+    "after_dependencies": null
+  },
+  {
+    "path": "node_modules/@typescript-eslint/eslint-plugin",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "dependencies",
+      "integrity",
+      "peerDependencies",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "@eslint-community/regexpp": "^4.12.2",
+      "@typescript-eslint/scope-manager": "8.72.0",
+      "@typescript-eslint/type-utils": "8.72.0",
+      "@typescript-eslint/utils": "8.72.0",
+      "@typescript-eslint/visitor-keys": "8.72.0",
+      "ignore": "^7.0.5",
+      "natural-compare": "^1.4.0",
+      "ts-api-utils": "^2.5.0"
+    },
+    "after_dependencies": {
+      "@eslint-community/regexpp": "^4.12.2",
+      "@typescript-eslint/scope-manager": "8.73.0",
+      "@typescript-eslint/type-utils": "8.73.0",
+      "@typescript-eslint/utils": "8.73.0",
+      "@typescript-eslint/visitor-keys": "8.73.0",
+      "ignore": "^7.0.5",
+      "natural-compare": "^1.4.0",
+      "ts-api-utils": "^2.5.0"
+    }
+  },
+  {
+    "path": "node_modules/@typescript-eslint/parser",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "dependencies",
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "@typescript-eslint/scope-manager": "8.72.0",
+      "@typescript-eslint/types": "8.72.0",
+      "@typescript-eslint/typescript-estree": "8.72.0",
+      "@typescript-eslint/visitor-keys": "8.72.0",
+      "debug": "^4.4.3"
+    },
+    "after_dependencies": {
+      "@typescript-eslint/scope-manager": "8.73.0",
+      "@typescript-eslint/types": "8.73.0",
+      "@typescript-eslint/typescript-estree": "8.73.0",
+      "@typescript-eslint/visitor-keys": "8.73.0",
+      "debug": "^4.4.3"
+    }
+  },
+  {
+    "path": "node_modules/@typescript-eslint/project-service",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "dependencies",
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "@typescript-eslint/tsconfig-utils": "^8.72.0",
+      "@typescript-eslint/types": "^8.72.0",
+      "debug": "^4.4.3"
+    },
+    "after_dependencies": {
+      "@typescript-eslint/tsconfig-utils": "^8.73.0",
+      "@typescript-eslint/types": "^8.73.0",
+      "debug": "^4.4.3"
+    }
+  },
+  {
+    "path": "node_modules/@typescript-eslint/scope-manager",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "dependencies",
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "@typescript-eslint/types": "8.72.0",
+      "@typescript-eslint/visitor-keys": "8.72.0"
+    },
+    "after_dependencies": {
+      "@typescript-eslint/types": "8.73.0",
+      "@typescript-eslint/visitor-keys": "8.73.0"
+    }
+  },
+  {
+    "path": "node_modules/@typescript-eslint/tsconfig-utils",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": null,
+    "after_dependencies": null
+  },
+  {
+    "path": "node_modules/@typescript-eslint/type-utils",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "dependencies",
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "@typescript-eslint/types": "8.72.0",
+      "@typescript-eslint/typescript-estree": "8.72.0",
+      "@typescript-eslint/utils": "8.72.0",
+      "debug": "^4.4.3",
+      "ts-api-utils": "^2.5.0"
+    },
+    "after_dependencies": {
+      "@typescript-eslint/types": "8.73.0",
+      "@typescript-eslint/typescript-estree": "8.73.0",
+      "@typescript-eslint/utils": "8.73.0",
+      "debug": "^4.4.3",
+      "ts-api-utils": "^2.5.0"
+    }
+  },
+  {
+    "path": "node_modules/@typescript-eslint/types",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": null,
+    "after_dependencies": null
+  },
+  {
+    "path": "node_modules/@typescript-eslint/typescript-estree",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "dependencies",
+      "integrity",
+      "peerDependencies",
+      "peerDependenciesMeta",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "@typescript-eslint/project-service": "8.72.0",
+      "@typescript-eslint/tsconfig-utils": "8.72.0",
+      "@typescript-eslint/types": "8.72.0",
+      "@typescript-eslint/visitor-keys": "8.72.0",
+      "debug": "^4.4.3",
+      "minimatch": "^10.2.2",
+      "semver": "^7.7.3",
+      "tinyglobby": "^0.2.15",
+      "ts-api-utils": "^2.5.0"
+    },
+    "after_dependencies": {
+      "@typescript-eslint/project-service": "8.73.0",
+      "@typescript-eslint/tsconfig-utils": "8.73.0",
+      "@typescript-eslint/types": "8.73.0",
+      "@typescript-eslint/visitor-keys": "8.73.0",
+      "debug": "^4.4.3",
+      "minimatch": "^11.0.1",
+      "semver": "^7.7.3",
+      "tinyglobby": "^0.2.15",
+      "ts-api-utils": "^2.5.0"
+    }
+  },
+  {
+    "path": "node_modules/@typescript-eslint/utils",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "dependencies",
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "@eslint-community/eslint-utils": "^4.9.1",
+      "@typescript-eslint/scope-manager": "8.72.0",
+      "@typescript-eslint/types": "8.72.0",
+      "@typescript-eslint/typescript-estree": "8.72.0"
+    },
+    "after_dependencies": {
+      "@eslint-community/eslint-utils": "^4.9.1",
+      "@typescript-eslint/scope-manager": "8.73.0",
+      "@typescript-eslint/types": "8.73.0",
+      "@typescript-eslint/typescript-estree": "8.73.0"
+    }
+  },
+  {
+    "path": "node_modules/@typescript-eslint/visitor-keys",
+    "before_version": "8.72.0",
+    "after_version": "8.73.0",
+    "changed_fields": [
+      "dependencies",
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "@typescript-eslint/types": "8.72.0",
+      "eslint-visitor-keys": "^5.0.0"
+    },
+    "after_dependencies": {
+      "@typescript-eslint/types": "8.73.0",
+      "eslint-visitor-keys": "^5.0.0"
+    }
+  },
+  {
+    "path": "node_modules/minimatch",
+    "before_version": "10.2.6",
+    "after_version": "11.0.9",
+    "changed_fields": [
+      "dependencies",
+      "engines",
+      "integrity",
+      "resolved",
+      "version"
+    ],
+    "before_dependencies": {
+      "brace-expansion": "^5.0.8"
+    },
+    "after_dependencies": {
+      "@isaacs/nonrecursive-glob-match": "^1.1.0",
+      "brace-expansion": "^5.0.12"
+    }
+  }
+]

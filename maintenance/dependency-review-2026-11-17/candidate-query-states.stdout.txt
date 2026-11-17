@@ -1,0 +1,13 @@
+{"name":"dashboard distinguishes failed requests from loading","passed":true}
+{"name":"dashboard distinguishes an empty response from loading","passed":true}
+{"name":"dashboard still labels supplied anchor metadata as unverified","passed":true}
+{"name":"dashboard pending requests do not become empty or failed results","passed":true}
+{"name":"failed dashboard refresh hides cached data and retry restores current data","passed":true}
+{"name":"offline-paused dashboard refresh hides cached data until resumption","passed":true}
+{"name":"a second global search on the same route changes the query","passed":true}
+{"name":"changing a filter resets later-page offset","passed":true}
+{"name":"page-count API responses permit next pages and recovery from an empty final page","passed":true}
+{"name":"an unsupported query never performs an unfiltered search","passed":true}
+{"name":"failed search refresh hides cached results and can be retried","passed":true}
+{"name":"offline-paused search hides the previous page until resumption","passed":true}
+{"name":"a UUID offers explicit event-detail navigation without an event_id filter","passed":true}

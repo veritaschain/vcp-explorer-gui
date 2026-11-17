@@ -1,0 +1,118 @@
+{
+  "observed_at_utc": "2026-11-17T12:59:26.449596+00:00",
+  "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+  "toolchain": {
+    "node": "v24.22.1",
+    "npm": "11.9.0",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "component_renderer": "react-test-renderer 18.3.1 (existing isolated test-only install; path recorded in commands-candidate-check.json)"
+  },
+  "candidate": {
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  },
+  "audits": {
+    "baseline-audit-full": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 6,
+        "high": 0,
+        "critical": 0,
+        "total": 6
+      },
+      "dependency_counts": {
+        "prod": 51,
+        "dev": 281,
+        "optional": 53,
+        "peer": 0,
+        "peerOptional": 0,
+        "total": 331
+      },
+      "advisories": [
+        "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+      ]
+    },
+    "baseline-audit-omit-dev": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependency_counts": {
+        "prod": 51,
+        "dev": 281,
+        "optional": 53,
+        "peer": 0,
+        "peerOptional": 0,
+        "total": 331
+      },
+      "advisories": []
+    },
+    "candidate-audit-full": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependency_counts": {
+        "prod": 51,
+        "dev": 282,
+        "optional": 53,
+        "peer": 0,
+        "peerOptional": 0,
+        "total": 332
+      },
+      "advisories": []
+    },
+    "candidate-audit-omit-dev": {
+      "vulnerabilities": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "dependency_counts": {
+        "prod": 51,
+        "dev": 282,
+        "optional": 53,
+        "peer": 0,
+        "peerOptional": 0,
+        "total": 332
+      },
+      "advisories": []
+    }
+  },
+  "build_comparison": {
+    "default": {
+      "before_file_count": 4,
+      "after_file_count": 4,
+      "all_paths_and_sha256_equal": true,
+      "differences": []
+    },
+    "static": {
+      "before_file_count": 4,
+      "after_file_count": 4,
+      "all_paths_and_sha256_equal": true,
+      "differences": []
+    }
+  },
+  "verification": {
+    "lint_exit_code": 0,
+    "unit_tests_passed": 58,
+    "query_state_scenarios": 13,
+    "detail_query_state_scenarios": 18,
+    "changed_lock_entries": 13,
+    "all_unrelated_entries_equal_to_baseline": true,
+    "all_existing_runtime_entries_equal_to_baseline": true,
+    "optional_typescript_native_not_installed": true
+  }
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "label": "candidate-audit-full",
+    "command": [
+      "npm",
+      "audit",
+      "--package-lock-only",
+      "--ignore-scripts",
+      "--json",
+      "--registry=https://registry.npmjs.org/",
+      "--userconfig=/dev/null",
+      "--globalconfig=/workspace/scratch/e4061c350564/audit/spec-review/empty-global-npmrc"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {},
+    "started_at_utc": "2026-11-17T12:58:09.115946+00:00",
+    "finished_at_utc": "2026-11-17T12:58:15.707540+00:00",
+    "duration_seconds": 6.592,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  },
+  {
+    "label": "candidate-audit-omit-dev",
+    "command": [
+      "npm",
+      "audit",
+      "--package-lock-only",
+      "--ignore-scripts",
+      "--json",
+      "--registry=https://registry.npmjs.org/",
+      "--userconfig=/dev/null",
+      "--globalconfig=/workspace/scratch/e4061c350564/audit/spec-review/empty-global-npmrc",
+      "--omit=dev"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {},
+    "started_at_utc": "2026-11-17T12:58:15.709128+00:00",
+    "finished_at_utc": "2026-11-17T12:58:22.671809+00:00",
+    "duration_seconds": 6.963,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  }
+]
