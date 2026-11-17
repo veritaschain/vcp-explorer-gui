@@ -1,0 +1,140 @@
+{
+  "recorded_at_utc": "2026-11-17T12:58:01.490592+00:00",
+  "npm_generated_lock_sha256": "531dc1e71b1e828ecdbb73e8fa433891c4a41b30055945349e90fff456dd8215",
+  "final_candidate_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368",
+  "reason": "Retain all unrelated libc metadata and existing semver/brace-expansion entries that satisfy every supported parent range. No overrides or dependency range forcing.",
+  "restored_entries": [
+    {
+      "path": "node_modules/@napi-rs/lzma-linux-x64-gnu",
+      "restored_version": "1.5.1",
+      "npm_generated_version": "1.5.1",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-arm-gnueabihf",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-arm-musleabihf",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-arm64-gnu",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-arm64-musl",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-loong64-gnu",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-loong64-musl",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-ppc64-gnu",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-ppc64-musl",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-riscv64-gnu",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-riscv64-musl",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-s390x-gnu",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-x64-gnu",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/@rollup/rollup-linux-x64-musl",
+      "restored_version": "4.64.12",
+      "npm_generated_version": "4.64.12",
+      "fields": [
+        "libc"
+      ]
+    },
+    {
+      "path": "node_modules/brace-expansion",
+      "restored_version": "5.0.12",
+      "npm_generated_version": "5.0.13",
+      "fields": [
+        "integrity",
+        "resolved",
+        "version"
+      ]
+    },
+    {
+      "path": "node_modules/semver",
+      "restored_version": "7.8.5",
+      "npm_generated_version": "7.8.6",
+      "fields": [
+        "integrity",
+        "resolved",
+        "version"
+      ]
+    }
+  ]
+}

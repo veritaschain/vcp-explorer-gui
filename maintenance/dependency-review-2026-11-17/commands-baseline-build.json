@@ -1,0 +1,62 @@
+[
+  {
+    "label": "baseline-install",
+    "command": [
+      "npm",
+      "ci",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {},
+    "started_at_utc": "2026-11-17T12:56:18.739716+00:00",
+    "finished_at_utc": "2026-11-17T12:56:25.276645+00:00",
+    "duration_seconds": 6.537,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "c6e1edba666e89b2484f32313cdcf2e4d99a9d05279d0714be35062493cdd5a6",
+    "package_lock_sha256": "0ff4914fe53ea2a4790bae4acce476b07bcd01b2596d615b12908d7c55445f47"
+  },
+  {
+    "label": "baseline-build-default",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {},
+    "started_at_utc": "2026-11-17T12:56:25.277841+00:00",
+    "finished_at_utc": "2026-11-17T12:56:32.920688+00:00",
+    "duration_seconds": 7.643,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "c6e1edba666e89b2484f32313cdcf2e4d99a9d05279d0714be35062493cdd5a6",
+    "package_lock_sha256": "0ff4914fe53ea2a4790bae4acce476b07bcd01b2596d615b12908d7c55445f47"
+  },
+  {
+    "label": "baseline-build-static",
+    "command": [
+      "npm",
+      "run",
+      "build",
+      "--",
+      "--base=/explorer/app/"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {
+      "VITE_USE_MOCK": "true",
+      "VITE_ROUTER_MODE": "hash",
+      "VITE_API_BASE_URL": "",
+      "VITE_EVIDENCE_API_BASE_URL": "https://veritaschain-evidence-demo.kamimura0000.chatgpt.site/v1"
+    },
+    "started_at_utc": "2026-11-17T12:56:32.922942+00:00",
+    "finished_at_utc": "2026-11-17T12:56:41.035557+00:00",
+    "duration_seconds": 8.113,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "c6e1edba666e89b2484f32313cdcf2e4d99a9d05279d0714be35062493cdd5a6",
+    "package_lock_sha256": "0ff4914fe53ea2a4790bae4acce476b07bcd01b2596d615b12908d7c55445f47"
+  }
+]

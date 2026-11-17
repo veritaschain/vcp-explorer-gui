@@ -1,0 +1,18 @@
+{"name":"another event never inherits the previous proof verdict","passed":true}
+{"name":"a changed proof must be verified again after refresh","passed":true}
+{"name":"a late verification cannot set a verdict for the next event","passed":true}
+{"name":"a late verification cannot restore a verdict during refresh","passed":true}
+{"name":"a failed request is not an anchoring or missing-proof conclusion","passed":true}
+{"name":"known missing mock proof remains unavailable rather than a transport error","passed":true}
+{"name":"proof HTTP 404 reports absent data without an anchoring conclusion","passed":true}
+{"name":"offline-paused refresh hides both cached proof and verdict","passed":true}
+{"name":"event request failure never becomes a missing-resource claim","passed":true}
+{"name":"event known missing mock resource preserves the missing response","passed":true}
+{"name":"event HTTP 404 preserves the missing-resource response","passed":true}
+{"name":"event failed refresh hides the previously displayed resource","passed":true}
+{"name":"event offline-paused refresh hides cached data and resumes","passed":true}
+{"name":"certificate request failure never becomes a missing-resource claim","passed":true}
+{"name":"certificate known missing mock resource preserves the missing response","passed":true}
+{"name":"certificate HTTP 404 preserves the missing-resource response","passed":true}
+{"name":"certificate failed refresh hides the previously displayed resource","passed":true}
+{"name":"certificate offline-paused refresh hides cached data and resumes","passed":true}

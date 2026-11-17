@@ -1,0 +1,131 @@
+[
+  {
+    "label": "candidate-install",
+    "command": [
+      "npm",
+      "ci",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {},
+    "started_at_utc": "2026-11-17T12:58:09.100414+00:00",
+    "finished_at_utc": "2026-11-17T12:58:19.941897+00:00",
+    "duration_seconds": 10.841,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  },
+  {
+    "label": "candidate-lint",
+    "command": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {},
+    "started_at_utc": "2026-11-17T12:58:19.942644+00:00",
+    "finished_at_utc": "2026-11-17T12:58:22.647484+00:00",
+    "duration_seconds": 2.705,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  },
+  {
+    "label": "candidate-unit-tests",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {},
+    "started_at_utc": "2026-11-17T12:58:22.648334+00:00",
+    "finished_at_utc": "2026-11-17T12:58:23.502750+00:00",
+    "duration_seconds": 0.854,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  },
+  {
+    "label": "candidate-query-states",
+    "command": [
+      "node",
+      "tools/tests/check-query-states.mjs"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {
+      "REACT_TEST_RENDERER_MODULE": "/workspace/scratch/e4061c350564/audit/vcp-explorer-gui-current/.query-tools/node_modules/react-test-renderer/index.js"
+    },
+    "started_at_utc": "2026-11-17T12:58:23.503486+00:00",
+    "finished_at_utc": "2026-11-17T12:58:25.627245+00:00",
+    "duration_seconds": 2.124,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  },
+  {
+    "label": "candidate-detail-query-states",
+    "command": [
+      "node",
+      "tools/tests/check-detail-query-states.mjs"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {
+      "REACT_TEST_RENDERER_MODULE": "/workspace/scratch/e4061c350564/audit/vcp-explorer-gui-current/.query-tools/node_modules/react-test-renderer/index.js"
+    },
+    "started_at_utc": "2026-11-17T12:58:25.628034+00:00",
+    "finished_at_utc": "2026-11-17T12:58:29.416141+00:00",
+    "duration_seconds": 3.788,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  },
+  {
+    "label": "candidate-build-default",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {},
+    "started_at_utc": "2026-11-17T12:58:29.417060+00:00",
+    "finished_at_utc": "2026-11-17T12:58:38.732265+00:00",
+    "duration_seconds": 9.315,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  },
+  {
+    "label": "candidate-build-static",
+    "command": [
+      "npm",
+      "run",
+      "build",
+      "--",
+      "--base=/explorer/app/"
+    ],
+    "cwd": "/workspace/scratch/e4061c350564/audit/spec-review/vcp-explorer-gui-deps",
+    "environment_overrides": {
+      "VITE_USE_MOCK": "true",
+      "VITE_ROUTER_MODE": "hash",
+      "VITE_API_BASE_URL": "",
+      "VITE_EVIDENCE_API_BASE_URL": "https://veritaschain-evidence-demo.kamimura0000.chatgpt.site/v1"
+    },
+    "started_at_utc": "2026-11-17T12:58:38.738736+00:00",
+    "finished_at_utc": "2026-11-17T12:58:46.095519+00:00",
+    "duration_seconds": 7.357,
+    "exit_code": 0,
+    "source_base_commit": "31db0e1dcb001e3887cd970cd05249659a6b7b85",
+    "package_json_sha256": "b14e9724c835197fae2675b6b6e8c4a4e36b60195896a8473dc5fda0d889f119",
+    "package_lock_sha256": "333294eb6cfb9f71b99f16f93ab97391564fc06a6097a80ee080349dbf7a6368"
+  }
+]

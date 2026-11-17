@@ -1,0 +1,30 @@
+[
+  {
+    "parent": "@typescript-eslint/typescript-estree",
+    "child": "minimatch",
+    "range": "^11.0.1",
+    "version": "11.0.9",
+    "satisfies": true
+  },
+  {
+    "parent": "minimatch",
+    "child": "brace-expansion",
+    "range": "^5.0.12",
+    "version": "5.0.12",
+    "satisfies": true
+  },
+  {
+    "parent": "@typescript-eslint/typescript-estree",
+    "child": "semver",
+    "range": "^7.7.3",
+    "version": "7.8.5",
+    "satisfies": true
+  },
+  {
+    "parent": "minimatch",
+    "child": "@isaacs/nonrecursive-glob-match",
+    "range": "^1.1.0",
+    "version": "1.1.0",
+    "satisfies": true
+  }
+]
