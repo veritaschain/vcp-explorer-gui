@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { isAxiosError } from 'axios';
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Shield,
@@ -15,27 +16,38 @@ import {
 import { vcpClient } from '@/lib/api-client';
 import { verifyMerkleProof, truncateHash, type VerificationResult } from '@/lib/crypto';
 import { cn, copyToClipboard } from '@/lib/utils';
+import type { MerkleProofResponse } from '@/types/vcp';
 
 export function MerkleProofPage() {
   const { eventId } = useParams<{ eventId: string }>();
-  const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
+  const [verified, setVerified] = useState<{ eventId: string; proof: MerkleProofResponse; updatedAt: number; result: VerificationResult } | null>(null);
+  const verificationRun = useRef(0);
   const [isVerifying, setIsVerifying] = useState(false);
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
-  const { data: proof, isLoading, error } = useQuery({
+  const { data: response, dataUpdatedAt, isFetching, fetchStatus, error, refetch } = useQuery({
     queryKey: ['proof', eventId],
-    queryFn: () => vcpClient.getMerkleProof(eventId!),
+    queryFn: ({ signal }) => vcpClient.getMerkleProof(eventId!, signal),
     enabled: !!eventId,
   });
 
+  // A verdict belongs to one completed response. Never display a previous
+  // result beside another event, refreshed proof, or unresolved request.
+  const proof = !error && fetchStatus === 'idle' ? response : undefined;
+  const verificationResult = proof && verified?.eventId === eventId && verified?.proof === proof && verified.updatedAt === dataUpdatedAt
+    ? verified.result : null;
+  useEffect(() => {
+    verificationRun.current += 1;
+    setVerified(null);
+    setIsVerifying(false);
+    return () => { verificationRun.current += 1; };
+  }, [eventId, proof, dataUpdatedAt]);
+
   const handleVerify = async () => {
-    if (!proof) return;
-
+    if (!proof || !eventId) return;
+    const run = ++verificationRun.current;
     setIsVerifying(true);
-    setVerificationResult(null);
-
-    // Add small delay for UX
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    setVerified(null);
 
     try {
       const result = await verifyMerkleProof(
@@ -45,22 +57,24 @@ export function MerkleProofPage() {
         proof.merkle_proof.root_hash,
         proof.merkle_proof.tree_size
       );
-      setVerificationResult(result);
+      if (run === verificationRun.current) setVerified({ eventId, proof, updatedAt: dataUpdatedAt, result });
     } catch (err) {
-      setVerificationResult({
+      if (run === verificationRun.current) setVerified({ eventId, proof, updatedAt: dataUpdatedAt, result: {
         isValid: false,
         computedRoot: '',
         expectedRoot: proof.merkle_proof.root_hash,
         steps: [],
         error: err instanceof Error ? err.message : 'Verification failed',
-      });
+      } });
+    } finally {
+      if (run === verificationRun.current) setIsVerifying(false);
     }
-
-    setIsVerifying(false);
   };
 
   const handleReset = () => {
-    setVerificationResult(null);
+    verificationRun.current += 1;
+    setVerified(null);
+    setIsVerifying(false);
   };
 
   const handleCopy = async (hash: string) => {
@@ -69,7 +83,16 @@ export function MerkleProofPage() {
     setTimeout(() => setCopiedHash(null), 2000);
   };
 
-  if (isLoading) {
+  if (fetchStatus === 'paused') {
+    return (
+      <div className="glass-card p-8 text-center" role="status">
+        <h2 className="text-xl font-semibold text-white mb-2">Waiting for a connection</h2>
+        <p className="text-vcp-400">The proof request is paused. No current inclusion result is available.</p>
+      </div>
+    );
+  }
+
+  if (isFetching) {
     return (
       <div className="space-y-6">
         <div className="h-12 bg-vcp-800/30 rounded-lg animate-pulse w-1/3" />
@@ -81,13 +104,24 @@ export function MerkleProofPage() {
     );
   }
 
-  if (error || !proof) {
+  if (error && !(isAxiosError(error) && error.response?.status === 404)) {
+    return (
+      <div className="glass-card p-8 text-center" role="alert">
+        <XCircle className="w-12 h-12 text-reject-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-white mb-2">Could not load Merkle proof</h2>
+        <p className="text-vcp-400 mb-6">The request failed. This does not establish whether the event has a proof or an external anchor.</p>
+        <button type="button" onClick={() => void refetch()} className="btn-primary">Retry proof request</button>
+      </div>
+    );
+  }
+
+  if (!proof) {
     return (
       <div className="glass-card p-8 text-center">
         <XCircle className="w-12 h-12 text-reject-400 mx-auto mb-4" />
         <h2 className="text-xl font-semibold text-white mb-2">Proof Not Available</h2>
         <p className="text-vcp-400 mb-6">
-          The Merkle proof for this event is not yet available. The event may not have been anchored yet.
+          No Merkle proof was supplied for this event. No inclusion or external-anchor result can be inferred.
         </p>
         <Link to={`/events/${eventId}`} className="btn-primary inline-flex items-center gap-2">
           <ArrowLeft className="w-4 h-4" />

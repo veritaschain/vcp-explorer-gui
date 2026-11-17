@@ -1,4 +1,4 @@
-# Search and dashboard request states
+# Explorer request states
 
 ## Search contract
 
@@ -40,21 +40,36 @@ is metadata, and displaying it does not establish an on-chain transaction or
 authenticated anchor. These UI changes do not change cryptographic checks,
 Evidence Demo verdicts, exact evidence downloads or fixed sample bytes.
 
+## Event, proof and certificate states
+
+Event details, Merkle proofs and certificates hide cached data while a request is
+in progress or offline-paused. A failed request is reported as a retrieval failure
+with a retry control; it does not establish that an event is missing or unanchored.
+Certificates are not offered for printing while their current request is unresolved.
+
+An inclusion result belongs to the exact completed proof response and event that
+were checked. Navigation, refreshed proof data or an unresolved refresh invalidates
+the displayed result. A verification that finishes after its request has been
+superseded is discarded. The newly displayed proof must be verified again. The
+check still compares only the supplied hash/path/root/tree size; it does not verify
+event contents, signatures or an external anchor.
+
 ## Regression checks and limits
 
 `npm test` includes query classification checks alongside the existing byte,
 Merkle, trace and evidence-report tests. The normal build CI also runs component
-behavior tests against the actual dashboard/search components and React Query.
+behavior tests against the actual dashboard, search and detail components and React Query.
 For a local run, install the test renderer in an isolated directory:
 
 ```bash
 npm install --prefix .query-tools --ignore-scripts --no-audit --no-fund --save-exact react-test-renderer@18.3.1
 REACT_TEST_RENDERER_MODULE="$PWD/.query-tools/node_modules/react-test-renderer/index.js" node tools/tests/check-query-states.mjs
+REACT_TEST_RENDERER_MODULE="$PWD/.query-tools/node_modules/react-test-renderer/index.js" node tools/tests/check-detail-query-states.mjs
 ```
 
 The isolated renderer is not an application dependency. It checks pending/error/
 empty and offline-paused states, failed refreshes, retry, same-route navigation, page resets,
-unsupported queries and explicit Event ID links. These are component behavior
+unsupported queries, explicit Event ID links, proof-result invalidation and late verification completions. These are component behavior
 checks, not browser rendering or accessibility validation.
 
 The existing Hash Chain browser CI additionally runs

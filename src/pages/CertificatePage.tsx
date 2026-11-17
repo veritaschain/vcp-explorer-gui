@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import {
   ArrowLeft,
   FileText,
@@ -20,11 +21,13 @@ export function CertificatePage() {
   const { eventId } = useParams<{ eventId: string }>();
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const { data: certificate, isLoading, error } = useQuery({
+  const { data: response, isFetching, fetchStatus, error, refetch } = useQuery({
     queryKey: ['certificate', eventId],
-    queryFn: () => vcpClient.getCertificate(eventId!),
+    queryFn: ({ signal }) => vcpClient.getCertificate(eventId!, signal),
     enabled: !!eventId,
   });
+
+  const certificate = !error && fetchStatus === 'idle' ? response : undefined;
 
   const handleCopy = async (value: string, field: string) => {
     const success = await copyToClipboard(value);
@@ -38,7 +41,16 @@ export function CertificatePage() {
     window.print();
   };
 
-  if (isLoading) {
+  if (fetchStatus === 'paused') {
+    return (
+      <div className="glass-card p-8 text-center" role="status">
+        <h2 className="text-xl font-semibold text-white mb-2">Waiting for a connection</h2>
+        <p className="text-vcp-400">The certificate request is paused. No current certificate is available to print.</p>
+      </div>
+    );
+  }
+
+  if (isFetching) {
     return (
       <div className="space-y-6">
         <div className="h-12 bg-vcp-800/30 rounded-lg animate-pulse w-1/3" />
@@ -50,7 +62,17 @@ export function CertificatePage() {
     );
   }
 
-  if (error || !certificate) {
+  if (error && !(isAxiosError(error) && error.response?.status === 404)) {
+    return (
+      <div className="glass-card p-8 text-center" role="alert">
+        <h2 className="text-xl font-semibold text-white mb-2">Could not load certificate</h2>
+        <p className="text-vcp-400 mb-6">The request failed. Availability cannot be determined from this response.</p>
+        <button type="button" onClick={() => void refetch()} className="btn-primary">Retry certificate request</button>
+      </div>
+    );
+  }
+
+  if (!certificate) {
     return (
       <div className="glass-card p-8 text-center">
         <FileText className="w-12 h-12 text-reject-400 mx-auto mb-4" />
