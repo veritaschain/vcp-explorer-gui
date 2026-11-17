@@ -45,6 +45,9 @@ Evidence Demo verdicts, exact evidence downloads or fixed sample bytes.
 Event details, Merkle proofs and certificates hide cached data while a request is
 in progress or offline-paused. A failed request is reported as a retrieval failure
 with a retry control; it does not establish that an event is missing or unanchored.
+A known absent mock record uses a typed missing-resource error, while API mode
+recognizes HTTP 404. Both retain the appropriate missing-data presentation;
+generic error text is never used to infer absence.
 Certificates are not offered for printing while their current request is unresolved.
 
 An inclusion result belongs to the exact completed proof response and event that

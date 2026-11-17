@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
+import { isResourceNotFound } from '@/lib/resource-errors';
 import {
   ArrowLeft,
   Copy,
@@ -65,7 +65,7 @@ export function EventDetail() {
     );
   }
 
-  if (error && !(isAxiosError(error) && error.response?.status === 404)) {
+  if (error && !isResourceNotFound(error)) {
     return (
       <div className="glass-card p-8 text-center" role="alert">
         <h2 className="text-xl font-semibold text-white mb-2">Could not load event</h2>

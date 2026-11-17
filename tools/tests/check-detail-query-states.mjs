@@ -145,6 +145,14 @@ export async function run() {
     assert.ok(button(view, 'Verify Inclusion'));
   });
 
+  await check('known missing mock proof remains unavailable rather than a transport error', async () => {
+    globalThis.__proofApi = async () => getMockProof('01934e3f-0000-7000-8000-ffffffffffff');
+    await mount();
+    assert.match(text(view.root), /Proof Not Available/);
+    assert.doesNotMatch(text(view.root), /Could not load Merkle proof/);
+    assert.equal(button(view, 'Verify Inclusion'), undefined);
+  });
+
   await check('proof HTTP 404 reports absent data without an anchoring conclusion', async () => {
     globalThis.__proofApi = async () => { throw new AxiosError('missing', undefined, undefined, undefined, { status: 404 }); };
     await mount();
@@ -176,6 +184,15 @@ export async function run() {
       globalThis[method] = success;
       await act(async () => { button(view, 'Retry ' + name + ' request').props.onClick(); await pause(); });
       assert.match(text(view.root), loaded);
+    });
+
+    await check(name + ' known missing mock resource preserves the missing response', async () => {
+      const getResource = name === 'event' ? getMockEventDetail : getMockCertificate;
+      globalThis[method] = async () => getResource('01934e3f-0000-7000-8000-ffffffffffff');
+      await mount(Page);
+      assert.match(text(view.root), name === 'event' ? /Event Not Found/ : /Certificate Not Available/);
+      assert.ok(!text(view.root).includes('Could not load ' + name));
+      assert.doesNotMatch(text(view.root), loaded);
     });
 
     await check(name + ' HTTP 404 preserves the missing-resource response', async () => {

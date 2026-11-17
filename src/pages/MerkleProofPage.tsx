@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
+import { isResourceNotFound } from '@/lib/resource-errors';
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
@@ -104,7 +104,7 @@ export function MerkleProofPage() {
     );
   }
 
-  if (error && !(isAxiosError(error) && error.response?.status === 404)) {
+  if (error && !isResourceNotFound(error)) {
     return (
       <div className="glass-card p-8 text-center" role="alert">
         <XCircle className="w-12 h-12 text-reject-400 mx-auto mb-4" />

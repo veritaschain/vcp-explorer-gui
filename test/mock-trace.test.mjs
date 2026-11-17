@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getMockEvents, getMockEventDetail } from '../src/mock-data/events.ts';
+import { getMockEvents, getMockEventDetail, getMockProof, getMockCertificate } from '../src/mock-data/events.ts';
+import { ResourceNotFoundError, isResourceNotFound } from '../src/lib/resource-errors.ts';
+import { AxiosError } from 'axios';
 import { inspectChainLinks } from '../src/lib/chain-inspection.mjs';
 
 const traces = [
@@ -52,4 +54,20 @@ test('trace selection composes with event type and pagination instead of slicing
   assert.equal(page.total, 3);
   assert.deepEqual(page.events.map(suffix), [6]);
   assert.equal(getMockEventDetail(page.events[0].event_id).header.trace_id, traces[1][0]);
+});
+
+
+test('all mock detail resources identify known absence without substituting data', () => {
+  for (const getResource of [getMockEventDetail, getMockProof, getMockCertificate]) {
+    assert.throws(() => getResource('01934e3f-0000-7000-8000-ffffffffffff'), ResourceNotFoundError);
+  }
+});
+
+test('only known source absence or HTTP 404 qualifies as missing', () => {
+  assert.equal(isResourceNotFound(new ResourceNotFoundError('missing')), true);
+  assert.equal(isResourceNotFound(new AxiosError('missing', undefined, undefined, undefined, { status: 404 })), true);
+  for (const error of [new Error('not found'), new Error('offline'), new AxiosError('failed'),
+    new AxiosError('failed', undefined, undefined, undefined, { status: 500 }), null, undefined]) {
+    assert.equal(isResourceNotFound(error), false);
+  }
 });
