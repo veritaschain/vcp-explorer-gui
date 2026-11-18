@@ -78,9 +78,11 @@ export function MerkleProofPage() {
   };
 
   const handleCopy = async (hash: string) => {
-    await copyToClipboard(hash);
-    setCopiedHash(hash);
-    setTimeout(() => setCopiedHash(null), 2000);
+    const success = await copyToClipboard(hash);
+    if (success) {
+      setCopiedHash(hash);
+      setTimeout(() => setCopiedHash(null), 2000);
+    }
   };
 
   if (fetchStatus === 'paused') {
@@ -134,15 +136,16 @@ export function MerkleProofPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
           <Link
             to={`/events/${eventId}`}
-            className="p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded-lg transition-all"
+            aria-label="Back to event"
+            className="shrink-0 p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded-lg transition-all"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           </Link>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
               <Shield className="w-5 h-5 text-verify-400" />
               Merkle Proof Verification
@@ -151,7 +154,7 @@ export function MerkleProofPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
           {verificationResult && (
             <button onClick={handleReset} className="btn-secondary inline-flex items-center gap-2">
               <RotateCcw className="w-4 h-4" />
@@ -238,13 +241,15 @@ export function MerkleProofPage() {
                   {proof.event_hash}
                 </code>
                 <button
+                  type="button"
+                  aria-label="Copy event hash"
                   onClick={() => handleCopy(proof.event_hash)}
                   className="p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded"
                 >
                   {copiedHash === proof.event_hash ? (
-                    <CheckCircle2 className="w-4 h-4 text-verify-400" />
+                    <CheckCircle2 className="w-4 h-4 text-verify-400" aria-hidden="true" />
                   ) : (
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-4 h-4" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -258,13 +263,15 @@ export function MerkleProofPage() {
                   {proof.merkle_proof.root_hash}
                 </code>
                 <button
+                  type="button"
+                  aria-label="Copy Merkle root"
                   onClick={() => handleCopy(proof.merkle_proof.root_hash)}
                   className="p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded"
                 >
                   {copiedHash === proof.merkle_proof.root_hash ? (
-                    <CheckCircle2 className="w-4 h-4 text-verify-400" />
+                    <CheckCircle2 className="w-4 h-4 text-verify-400" aria-hidden="true" />
                   ) : (
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-4 h-4" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -294,13 +301,15 @@ export function MerkleProofPage() {
                       {hash}
                     </code>
                     <button
+                      type="button"
+                      aria-label={`Copy audit path hash L${index}`}
                       onClick={() => handleCopy(hash)}
                       className="p-1 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded"
                     >
                       {copiedHash === hash ? (
-                        <CheckCircle2 className="w-3 h-3 text-verify-400" />
+                        <CheckCircle2 className="w-3 h-3 text-verify-400" aria-hidden="true" />
                       ) : (
-                        <Copy className="w-3 h-3" />
+                        <Copy className="w-3 h-3" aria-hidden="true" />
                       )}
                     </button>
                   </div>

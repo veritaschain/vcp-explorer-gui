@@ -94,21 +94,22 @@ export function EventDetail() {
   return (
     <div className="space-y-6">
       {/* Breadcrumb & Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-4">
           <Link
             to="/"
-            className="p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded-lg transition-all"
+            aria-label="Back to dashboard"
+            className="shrink-0 p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded-lg transition-all"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
           </Link>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-xl font-bold text-white">Event Details</h1>
-            <p className="text-sm text-vcp-400 font-mono">{event.header.event_id}</p>
+            <p className="break-all text-sm text-vcp-400 font-mono">{event.header.event_id}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
           <Link
             to={`/events/${eventId}/proof`}
             className="btn-secondary inline-flex items-center gap-2"
@@ -381,13 +382,15 @@ export function EventDetail() {
                   {event.security.event_hash}
                 </code>
                 <button
+                  type="button"
+                  aria-label="Copy event hash"
                   onClick={() => handleCopy(event.security.event_hash, 'event_hash')}
                   className="p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded"
                 >
                   {copiedField === 'event_hash' ? (
-                    <CheckCircle2 className="w-4 h-4 text-verify-400" />
+                    <CheckCircle2 className="w-4 h-4 text-verify-400" aria-hidden="true" />
                   ) : (
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-4 h-4" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -400,13 +403,15 @@ export function EventDetail() {
                   {event.security.prev_hash}
                 </code>
                 <button
+                  type="button"
+                  aria-label="Copy previous hash"
                   onClick={() => handleCopy(event.security.prev_hash, 'prev_hash')}
                   className="p-2 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded"
                 >
                   {copiedField === 'prev_hash' ? (
-                    <CheckCircle2 className="w-4 h-4 text-verify-400" />
+                    <CheckCircle2 className="w-4 h-4 text-verify-400" aria-hidden="true" />
                   ) : (
-                    <Copy className="w-4 h-4" />
+                    <Copy className="w-4 h-4" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -516,13 +521,15 @@ function FieldDisplay({
         )}
         {copyable && onCopy && (
           <button
+            type="button"
+            aria-label={`Copy ${label}`}
             onClick={onCopy}
             className="p-1 text-vcp-400 hover:text-white hover:bg-vcp-800/50 rounded flex-shrink-0"
           >
             {copied ? (
-              <CheckCircle2 className="w-3 h-3 text-verify-400" />
+              <CheckCircle2 className="w-3 h-3 text-verify-400" aria-hidden="true" />
             ) : (
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3 h-3" aria-hidden="true" />
             )}
           </button>
         )}
