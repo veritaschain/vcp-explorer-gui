@@ -29,7 +29,7 @@ jobs:
         run: |
           npm install --prefix .a11y-tools --ignore-scripts --no-audit --save-exact playwright@1.56.1 axe-core@4.13.0
           node .a11y-tools/node_modules/playwright/cli.js install --with-deps chromium
-      - name: Check bounded certificate and search-filter accessibility
+      - name: Check bounded certificate, search and detail-control accessibility
         env:
           PW_MODULE: ${{ github.workspace }}/.a11y-tools/node_modules/playwright
           AXE_SCRIPT: ${{ github.workspace }}/.a11y-tools/node_modules/axe-core/axe.min.js

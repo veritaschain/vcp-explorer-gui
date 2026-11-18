@@ -78,6 +78,7 @@ sizes, path-length errors and indices above the 32-bit range.
 ### 📜 Certificate Generation
 - Event certificate view (JSON/print; not a certification or compliance finding)
 - Print view (browser-managed Print / Save as PDF); the resulting PDF has **not** been validated as tagged, screen-reader accessible or PDF/UA conformant. See [PDF print accessibility status](docs/PDF_PRINT_ACCESSIBILITY.md).
+- Named event/proof navigation and copy controls, with bounded keyboard and clipboard-result checks. See [detail control accessibility scope](docs/DETAIL_CONTROL_ACCESSIBILITY.md).
 - Blockchain anchor display (demo data; not verified on-chain)
 
 ### 🔗 Event Chain Visualization

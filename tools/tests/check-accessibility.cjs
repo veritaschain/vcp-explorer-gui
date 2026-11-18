@@ -13,6 +13,7 @@ const errors = [];
 const results = [];
 const controls = [];
 const searchFilters = [];
+const detailControls = [];
 const server = http.createServer((req, res) => {
   let rel;
   try { rel = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname); }
@@ -189,6 +190,148 @@ let browser, context;
     item.passed = true;
     await page.screenshot({ path: path.join(out, 'search-filters-' + width + '.png'), fullPage: true });
   }
+
+  // Icon-only actions need names on event and proof routes too. Restrict this
+  // gate to control names and native keyboard activation; it does not turn the
+  // unresolved whole-page contrast/manual checks into a conformance claim.
+  async function checkDetailControls(eventLink, kind, width) {
+    const isProof = kind === 'proof';
+    const item = { kind, width, passed: false };
+    detailControls.push(item);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(origin + eventLink + (isProof ? '/proof' : ''));
+    await page.getByRole('heading', {
+      name: isProof ? 'Merkle Proof Verification' : 'Event Details', exact: true,
+    }).waitFor();
+    await page.addScriptTag({ path: axePath });
+    const main = page.getByRole('main');
+    async function checkContainment(label) {
+      const measured = await main.evaluate((el, width) => ({
+        viewport: width,
+        documentWidth: document.documentElement.scrollWidth,
+        overflowActions: Array.from(el.querySelectorAll('a, button')).filter(action => {
+          const box = action.getBoundingClientRect();
+          return box.width > 0 && (box.left < -1 || box.right > width + 1);
+        }).map(action => action.getAttribute('aria-label') || action.textContent.trim()),
+      }), width);
+      assert.ok(measured.documentWidth <= width + 1, `${kind} ${label} must not overflow the viewport`);
+      assert.deepEqual(measured.overflowActions, [], `${kind} ${label} actions must stay in the viewport`);
+      return measured;
+    }
+    item.containment = { initial: await checkContainment('initial header') };
+    const backName = isProof ? 'Back to event' : 'Back to dashboard';
+    const back = main.getByRole('link', { name: backName, exact: true });
+    assert.equal(await back.count(), 1);
+    assert.equal(await back.getAttribute('href'), isProof ? eventLink : '/');
+
+    const names = isProof ? ['Copy event hash', 'Copy Merkle root']
+      : ['Copy Event ID', 'Copy Trace ID', 'Copy event hash', 'Copy previous hash'];
+    if (isProof) {
+      const heading = await main.getByText(/^Audit Path \(\d+ siblings\)$/).textContent();
+      const count = Number(heading.match(/\((\d+) siblings\)/)[1]);
+      assert.ok(count > 0, 'The chosen proof fixture must exercise sibling controls');
+      for (let i = 0; i < count; i++) names.push('Copy audit path hash L' + i);
+    }
+    assert.equal(await main.getByRole('button', { name: /^Copy / }).count(), names.length);
+    for (const name of names) {
+      const button = main.getByRole('button', { name, exact: true });
+      assert.equal(await button.count(), 1, `${name} must identify one action`);
+      assert.equal(await button.getAttribute('type'), 'button');
+    }
+
+    async function nameScan() {
+      return await main.evaluate(async el => window.axe.run(el, {
+        runOnly: { type: 'rule', values: ['button-name', 'link-name'] },
+        resultTypes: ['violations', 'incomplete'],
+      }));
+    }
+    const candidate = await nameScan();
+    assert.equal(candidate.violations.length, 0);
+    assert.equal(candidate.incomplete.length, 0);
+
+    // Reproduce the original unnamed controls on a test-only DOM and require
+    // each copy action and the back link to fail. Restore before interacting.
+    const labeled = main.locator('button[aria-label^="Copy "], a[aria-label="' + backName + '"]');
+    const saved = await labeled.evaluateAll(elements => elements.map(el => {
+      const label = el.getAttribute('aria-label');
+      el.setAttribute('data-test-control-name', label);
+      el.removeAttribute('aria-label');
+      return label;
+    }));
+    assert.equal(saved.length, names.length + 1);
+    const negative = await nameScan();
+    item.negativeControl = short(negative.violations);
+    assert.equal(negative.violations.flatMap(rule => rule.nodes).length, names.length + 1);
+    assert.equal(negative.incomplete.length, 0);
+    await main.locator('[data-test-control-name]').evaluateAll(elements => elements.forEach(el => {
+      el.setAttribute('aria-label', el.getAttribute('data-test-control-name'));
+      el.removeAttribute('data-test-control-name');
+    }));
+    const restored = await nameScan();
+    assert.equal(restored.violations.length, 0);
+    assert.equal(restored.incomplete.length, 0);
+
+    // Capture writes to the Clipboard API boundary without using the host's
+    // real clipboard. These are bounded keyboard/action checks, not a native
+    // operating-system clipboard or screen-reader test.
+    await page.evaluate(() => {
+      window.__copyWrites = [];
+      window.__copyAttempts = 0;
+      window.__rejectCopy = false;
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: { writeText: async text => {
+          window.__copyAttempts++;
+          if (window.__rejectCopy) throw new DOMException('Clipboard access denied', 'NotAllowedError');
+          window.__copyWrites.push(text);
+        } },
+      });
+    });
+    if (isProof) {
+      const leafCopy = main.getByRole('button', { name: 'Copy event hash', exact: true });
+      await page.evaluate(() => { window.__rejectCopy = true; });
+      await leafCopy.focus();
+      await leafCopy.press('Enter');
+      await page.waitForFunction(() => window.__copyAttempts === 1);
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      assert.equal(await page.evaluate(() => window.__copyWrites.length), 0);
+      assert.equal(await leafCopy.locator('svg.lucide-copy').count(), 1,
+        'A rejected clipboard write must not replace the copy icon with success feedback');
+      assert.equal(await leafCopy.locator('svg.text-verify-400').count(), 0);
+      item.rejectedClipboardWriteShowsSuccess = false;
+      await page.evaluate(() => { window.__rejectCopy = false; });
+    }
+    const copyResults = [];
+    for (const name of names) {
+      const button = main.getByRole('button', { name, exact: true });
+      const value = await button.evaluate(el => el.parentElement.querySelector('code')?.textContent.trim()
+        || el.parentElement.querySelector('a, span')?.textContent.trim());
+      assert.ok(value, `${name} must have an adjacent displayed value`);
+      for (const key of ['Enter', 'Space']) {
+        const before = await page.evaluate(() => window.__copyWrites.length);
+        await button.focus();
+        await button.press(key);
+        await page.waitForFunction(count => window.__copyWrites.length === count + 1, before);
+        assert.equal(await page.evaluate(() => window.__copyWrites.at(-1)), value);
+        assert.equal(await button.evaluate(el => el === document.activeElement), true);
+        assert.equal(await button.getAttribute('aria-label'), name);
+        await button.locator('svg.text-verify-400').waitFor();
+      }
+      copyResults.push({ name, keyboardKeys: ['Enter', 'Space'], copiedDisplayedValue: true });
+    }
+    item.names = [backName, ...names];
+    item.copyResults = copyResults;
+    if (isProof) {
+      await main.getByRole('button', { name: 'Verify Inclusion', exact: true }).click();
+      await main.getByRole('button', { name: 'Reset', exact: true }).waitFor();
+      item.containment.verified = await checkContainment('verified header with Reset');
+    }
+    await page.screenshot({ path: path.join(out, kind + '-controls-' + width + '.png'), fullPage: true });
+    await back.focus();
+    await back.press('Enter');
+    await page.getByRole('heading', { name: isProof ? 'Event Details' : 'VCP Explorer', exact: true }).waitFor();
+    item.passed = true;
+  }
   await page.goto(origin+'/');
   await page.locator('a[href^="/events/"]').first().waitFor();
   const eventLink=await page.locator('a[href^="/events/"]').first().getAttribute('href');
@@ -215,23 +358,30 @@ let browser, context;
 
   await checkSearchFilters(1440);
   await checkSearchFilters(390);
+  for (const width of [320, 390, 768, 1440]) {
+    await checkDetailControls(eventLink, 'event', width);
+    await checkDetailControls(eventLink, 'proof', width);
+  }
 
   const gateFailures = results.filter(r=>r.certificateContrast && !r.certificateContrast.ok).map(r=>r.label);
   const calibrationOk = controls.length === 3 && controls[0].rejected && controls[1].rejected && controls[2].accepted;
   const totalViolations = results.reduce((n,x)=>n+x.violations.length,0);
   const searchFiltersOk = searchFilters.length === 2 && searchFilters.every(item => item.passed);
-  const ok = !errors.length && !totalViolations && !gateFailures.length && calibrationOk && searchFiltersOk;
+  const detailControlsOk = detailControls.length === 8 && detailControls.every(item => item.passed);
+  const ok = !errors.length && !totalViolations && !gateFailures.length && calibrationOk && searchFiltersOk && detailControlsOk;
   const summary={
-    status:ok?'NO_AUTOMATED_VIOLATIONS_CERTIFICATE_CONTRAST_AND_SEARCH_FILTERS_CHECKED':'ISSUES_FOUND',
+    status:ok?'BOUNDED_ACCESSIBILITY_CHECKS_PASSED':'ISSUES_FOUND',
     scans:results,totalViolations,certificateContrastGateFailures:gateFailures,
     calibrationOk,controls,searchFiltersOk,searchFilters,
+    detailControlsOk,detailControls,
     uniqueRules:[...new Set(results.flatMap(x=>x.violations.map(y=>y.rule)))],
     browserErrors:errors,
-    limits:'Bounded first-party mock UI. Certificate text contrast must be measured with no incomplete nodes. Search checks cover four control names, disclosure state and selected native keyboard interactions. Whole-page incomplete/manual checks outside those scopes remain unresolved; not PDF/UA or screen-reader conformance.',
+    limits:'Bounded first-party mock UI. Certificate text contrast must be measured with no incomplete nodes. Search checks cover four control names, disclosure state and selected native keyboard interactions. Event/proof checks cover named back/copy controls, keyboard activation and stubbed Clipboard API writes. Whole-page incomplete/manual checks outside those scopes remain unresolved; not native clipboard, PDF/UA or screen-reader conformance.',
   };
   fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(summary,null,2)+'\n');
   console.log(JSON.stringify({
     status:summary.status,calibrationOk,gateFailures,searchFiltersOk,searchFilters,
+    detailControlsOk,detailControls,
     scans:results.map(x=>({label:x.label,violations:x.violations.map(v=>({rule:v.rule,nodes:v.nodes})),incomplete:x.incomplete.map(v=>({rule:v.rule,nodes:v.nodes.length})),certificateContrast:x.certificateContrast ? {ok:x.certificateContrast.ok,passingTextNodes:x.certificateContrast.passingTextNodes,violations:x.certificateContrast.violations.map(v=>({id:v.id,nodes:v.nodes})),incomplete:x.certificateContrast.incomplete.map(v=>({id:v.id,nodes:v.nodes})),background:x.certificateContrast.background,labelColor:x.certificateContrast.labelColor} : null})),
     controls:controls.map(c=>({name:c.name,rejected:c.rejected,accepted:c.accepted,violations:c.observed.violations.length,incomplete:c.observed.incomplete.length})),
     browserErrors:errors,
@@ -239,7 +389,7 @@ let browser, context;
   if(!ok) process.exitCode=1;
 })().catch(e=>{
   console.error(e);process.exitCode=1;
-  fs.writeFileSync(path.join(out,'error.json'),JSON.stringify({error:String(e),results,controls,searchFilters,browserErrors:errors},null,2)+'\n');
+  fs.writeFileSync(path.join(out,'error.json'),JSON.stringify({error:String(e),results,controls,searchFilters,detailControls,browserErrors:errors},null,2)+'\n');
 }).finally(async()=>{
   if(context)await context.close();
   if(browser)await browser.close();

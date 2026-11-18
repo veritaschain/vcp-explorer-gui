@@ -77,6 +77,34 @@ async function check(name, operation) {
 }
 
 export async function run() {
+  await check('a rejected proof clipboard write never reports copy success', async () => {
+    const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    const writes = [];
+    let reject = true;
+    try {
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: {
+        writeText: async value => {
+          if (reject) throw new DOMException('Clipboard access denied', 'NotAllowedError');
+          writes.push(value);
+        },
+      } });
+      await mount();
+      const copy = view.root.findAllByType('button').find(node => node.props['aria-label'] === 'Copy event hash');
+      const showsSuccess = () => copy.findAllByType('svg').some(node => node.props.className.includes('text-verify-400'));
+      assert.equal(showsSuccess(), false);
+      await act(async () => { await copy.props.onClick(); });
+      assert.equal(writes.length, 0);
+      assert.equal(showsSuccess(), false);
+      reject = false;
+      await act(async () => { await copy.props.onClick(); });
+      assert.deepEqual(writes, [getMockProof(eventIds[0]).event_hash]);
+      assert.equal(showsSuccess(), true);
+    } finally {
+      if (original) Object.defineProperty(navigator, 'clipboard', original);
+      else delete navigator.clipboard;
+    }
+  });
+
   await check('another event never inherits the previous proof verdict', async () => {
     await mount();
     await verifyCurrent();
