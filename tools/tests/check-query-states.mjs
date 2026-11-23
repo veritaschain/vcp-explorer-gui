@@ -5,7 +5,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const renderer = process.env.REACT_TEST_RENDERER_MODULE;
-if (!renderer) throw new Error('Set REACT_TEST_RENDERER_MODULE to react-test-renderer 18.3.1.');
+if (!renderer) throw new Error('Set REACT_TEST_RENDERER_MODULE to the renderer matching the installed React version.');
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const result = await build({
   stdin: {
     resolveDir: process.cwd(), loader: 'tsx',
@@ -209,7 +210,8 @@ export async function run() {
     assert.equal(button(view, 'First').props.disabled, true);
     await act(async () => { holdSecond = false; releaseSecond(); await pause(); });
     assert.equal(button(view, 'Next').props.disabled, false);
-    await act(async () => { button(view, 'Next').props.onClick(); await pause(); });
+    await act(async () => button(view, 'Next').props.onClick());
+    await act(pause);
     assert.equal(calls.at(-1).offset, 40);
     assert.match(text(view.root), /No events returned on this page/);
     assert.equal(button(view, 'Next').props.disabled, true);

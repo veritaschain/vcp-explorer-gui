@@ -4,7 +4,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const renderer = process.env.REACT_TEST_RENDERER_MODULE;
-if (!renderer) throw new Error('Set REACT_TEST_RENDERER_MODULE to react-test-renderer 18.3.1.');
+if (!renderer) throw new Error('Set REACT_TEST_RENDERER_MODULE to the renderer matching the installed React version.');
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const result = await build({
   stdin: {
     resolveDir: process.cwd(), loader: 'tsx',
