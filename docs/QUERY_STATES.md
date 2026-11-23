@@ -65,7 +65,8 @@ behavior tests against the actual dashboard, search and detail components and Re
 For a local run, install the test renderer in an isolated directory:
 
 ```bash
-npm install --prefix .query-tools --ignore-scripts --no-audit --no-fund --save-exact react-test-renderer@18.3.1
+react_version=$(node -p "require('react/package.json').version")
+npm install --prefix .query-tools --ignore-scripts --no-audit --no-fund --save-exact "react-test-renderer@$react_version"
 REACT_TEST_RENDERER_MODULE="$PWD/.query-tools/node_modules/react-test-renderer/index.js" node tools/tests/check-query-states.mjs
 REACT_TEST_RENDERER_MODULE="$PWD/.query-tools/node_modules/react-test-renderer/index.js" node tools/tests/check-detail-query-states.mjs
 ```
