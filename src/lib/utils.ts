@@ -24,11 +24,15 @@ export function formatDate(date: string | Date): string {
 }
 
 /**
- * Format date with milliseconds
+ * Normalize the display to UTC, retaining fractional seconds supplied by the API.
  */
 export function formatDatePrecise(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toISOString().replace('T', ' ').replace('Z', ' UTC');
+  // Date handles the UTC offset, but stores only the first three fractional digits.
+  const extraDigits = typeof date === 'string'
+    ? /[T ]\d{2}:\d{2}:\d{2}\.\d{3}(\d+)/i.exec(date)?.[1] ?? ''
+    : '';
+  return d.toISOString().replace('T', ' ').replace('Z', extraDigits + ' UTC');
 }
 
 /**
