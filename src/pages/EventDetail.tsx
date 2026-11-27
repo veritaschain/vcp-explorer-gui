@@ -132,7 +132,7 @@ export function EventDetail() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <EventTypeBadge type={event.header.event_type as EventType} size="lg" />
-            <StatusBadge status={event.header.anchor_status || 'PENDING'} />
+            <StatusBadge status={event.header.anchor_status} />
           </div>
           <div className="text-right">
             <p className="text-sm text-vcp-400">Event Type Code</p>
@@ -167,6 +167,7 @@ export function EventDetail() {
             label="Timestamp"
             value={formatDatePrecise(event.header.timestamp_iso)}
             icon={Clock}
+            wrap
             subtext={`Precision: ${event.header.timestamp_precision}`}
           />
 
@@ -475,6 +476,7 @@ interface FieldDisplayProps {
   value: string;
   icon: typeof Hash;
   copyable?: boolean;
+  wrap?: boolean;
   onCopy?: () => void;
   copied?: boolean;
   link?: string;
@@ -487,6 +489,7 @@ function FieldDisplay({
   value,
   icon: Icon,
   copyable,
+  wrap,
   onCopy,
   copied,
   link,
@@ -515,7 +518,7 @@ function FieldDisplay({
             <ExternalLink className="w-3 h-3 flex-shrink-0" />
           </Link>
         ) : (
-          <span className={cn('text-sm font-mono truncate', status ? statusColors[status] : 'text-white')}>
+          <span className={cn('text-sm font-mono', wrap ? 'min-w-0 break-words' : 'truncate', status ? statusColors[status] : 'text-white')}>
             {value}
           </span>
         )}

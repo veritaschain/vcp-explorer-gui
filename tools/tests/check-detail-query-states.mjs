@@ -200,10 +200,34 @@ export async function run() {
     assert.doesNotMatch(text(view.root), matched);
     assert.ok(button(view, 'Verify Inclusion'));
   });
+  for (const [status, label] of [
+    ['VERIFIED', 'Verified (API-reported)'], ['PENDING', 'Pending'],
+    ['ANCHORED', 'Anchored'], ['FAILED', 'Failed'],
+    ['FUTURE_STATUS', 'Unknown'], ['constructor', 'Unknown'], [undefined, 'Unknown'],
+  ]) {
+    await check('event detail shows the supplied anchor status: ' + String(status), async () => {
+      globalThis.__eventApi = async id => {
+        const event = getMockEventDetail(id);
+        return { ...event, header: { ...event.header, anchor_status: status } };
+      };
+      await mount(EventDetail);
+      assert.ok(view.root.findAllByType('span').some(node => node.children.includes(label)));
+    });
+  }
   for (const [name, Page, method, loaded] of [
     ['event', EventDetail, '__eventApi', /Event Details/],
     ['certificate', CertificatePage, '__certificateApi', /VCP Event Certificate/],
   ]) {
+    await check(name + ' displays the original nanosecond precision in UTC', async () => {
+      const getResource = globalThis[method];
+      globalThis[method] = async id => {
+        const resource = await getResource(id);
+        return { ...resource, header: { ...resource.header, timestamp_iso: '2026-11-27T00:01:02.000000007+09:00' } };
+      };
+      await mount(Page);
+      assert.ok(text(view.root).includes('2026-11-26 15:01:02.000000007 UTC'));
+    });
+
     await check(name + ' request failure never becomes a missing-resource claim', async () => {
       const success = globalThis[method];
       globalThis[method] = async () => { throw new Error('offline'); };
